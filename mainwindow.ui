@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>834</width>
+    <height>656</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>246</x>
+      <y>9</y>
+      <width>591</width>
+      <height>611</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="send">
+     <attribute name="title">
+      <string>发送机</string>
+     </attribute>
+     <widget class="QGroupBox" name="groupBox_3">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>30</y>
+        <width>431</width>
+        <height>151</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>发送文件设置</string>
+      </property>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>30</y>
+         <width>75</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>打开文件</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_4">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>30</y>
+         <width>113</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_3">
+       <property name="geometry">
+        <rect>
+         <x>240</x>
+         <y>30</y>
+         <width>75</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>发送文件</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_4">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>80</y>
+         <width>71</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>文件前缀个数</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="lineEdit_5">
+       <property name="geometry">
+        <rect>
+         <x>130</x>
+         <y>80</y>
+         <width>113</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="recv">
+     <attribute name="title">
+      <string>接收机</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="test">
+     <attribute name="title">
+      <string>测试</string>
+     </attribute>
+    </widget>
+   </widget>
+   <widget class="QFrame" name="frame">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>9</y>
+      <width>231</width>
+      <height>593</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="title">
+        <string>IP设置</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>设备IP：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" colspan="2">
+         <widget class="QLineEdit" name="lineEdit_deviceIP">
+          <property name="text">
+           <string>192.168.1.10</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>主机IP：</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" colspan="2">
+         <widget class="QLineEdit" name="lineEdit_pcIP">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0" colspan="3">
+         <widget class="QRadioButton" name="rbt_connect">
+          <property name="text">
+           <string>Connect</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_2">
+       <property name="title">
+        <string>AT 指令</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>设置指令:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>查询指令:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" colspan="2">
+         <widget class="QComboBox" name="comboBox_query"/>
+        </item>
+        <item row="2" column="1" colspan="2">
+         <widget class="QComboBox" name="comboBox_setup"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>执行指令:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" colspan="2">
+         <widget class="QComboBox" name="comboBox_exe"/>
+        </item>
+        <item row="0" column="3">
+         <widget class="QPushButton" name="btn_querySend">
+          <property name="text">
+           <string>发送</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QPushButton" name="btn_exeSend">
+          <property name="text">
+           <string>发送</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="3">
+         <widget class="QPushButton" name="btn_setupSend">
+          <property name="text">
+           <string>发送</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0" colspan="4">
+         <widget class="QPlainTextEdit" name="plainTextEdit_at"/>
+        </item>
+        <item row="3" column="0" colspan="4">
+         <widget class="QLineEdit" name="lineEdit_setup"/>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>834</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

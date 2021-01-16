@@ -49,5 +49,6 @@ private:
     QTcpSocket *tcpSocket;
     qint32      tcpStatus;
     AT          at;
+    bool       testStatus;
 };
 #endif  // MAINWINDOW_H

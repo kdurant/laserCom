@@ -1,8 +1,12 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), tcpPort(17), tcpSocket(new QTcpSocket())
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    tcpPort(17),
+    tcpSocket(new QTcpSocket()),
+    testStatus(false)
 {
     ui->setupUi(this);
 
@@ -145,9 +149,24 @@ void MainWindow::initSignalSlot()
             ui->progressBar_sendFile->setValue(total_len);
         }
         qDebug() << total_len;
-        //        tcpSocket->write(file.readAll());
+    });
 
-        //        updateFlash->flashUpdate(updateFilePath);
+    connect(ui->btn_sendTest, &QPushButton::pressed, this, [this]() {
+        testStatus = !testStatus;
+        if(testStatus)
+            ui->btn_sendTest->setText("Stop Test");
+        else
+            ui->btn_sendTest->setText("Start Test");
+
+        QByteArray data(1446, 0);
+        for(int i = 0; i < 1446; i++)
+            data[i] = i % 256;
+        while(testStatus)
+        {
+            tcpSocket->write(data);
+            QThread::usleep(1);
+            QCoreApplication::processEvents();
+        }
     });
 }
 

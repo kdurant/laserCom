@@ -16,3 +16,4 @@ SpaceBeforeParens : Never
 SortIncludes : false
 Standard : C++11
 UseTab : Never
+BreakConstructorInitializers: BeforeComma

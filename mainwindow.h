@@ -9,6 +9,7 @@
 #include <QTcpSocket>
 #include <QThread>
 #include <QMessageBox>
+#include <QFileDialog>
 
 #include "at.h"
 

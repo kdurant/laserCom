@@ -40,7 +40,7 @@
           <item row="0" column="1" colspan="2">
            <widget class="QLineEdit" name="lineEdit_deviceIP">
             <property name="text">
-             <string>192.168.1.10</string>
+             <string>172.16.93.87</string>
             </property>
            </widget>
           </item>
@@ -215,23 +215,23 @@
           <widget class="QLabel" name="label_7">
            <property name="geometry">
             <rect>
-             <x>40</x>
-             <y>40</y>
-             <width>311</width>
+             <x>10</x>
+             <y>22</y>
+             <width>331</width>
              <height>16</height>
             </rect>
            </property>
            <property name="text">
-            <string>一直发送测试数据，直到按下停止按钮</string>
+            <string>在指定时间内，一直发送数据</string>
            </property>
           </widget>
           <widget class="QPushButton" name="btn_sendTest">
            <property name="geometry">
             <rect>
-             <x>40</x>
-             <y>80</y>
-             <width>161</width>
-             <height>41</height>
+             <x>20</x>
+             <y>180</y>
+             <width>128</width>
+             <height>32</height>
             </rect>
            </property>
            <property name="font">
@@ -246,10 +246,10 @@
           <widget class="QPushButton" name="btn_stopTest">
            <property name="geometry">
             <rect>
-             <x>240</x>
-             <y>80</y>
-             <width>161</width>
-             <height>41</height>
+             <x>190</x>
+             <y>180</y>
+             <width>116</width>
+             <height>32</height>
             </rect>
            </property>
            <property name="font">
@@ -259,6 +259,35 @@
            </property>
            <property name="text">
             <string>stop test</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="lineEdit_lastInterval">
+           <property name="geometry">
+            <rect>
+             <x>130</x>
+             <y>140</y>
+             <width>133</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>1</string>
+           </property>
+           <property name="readOnly">
+            <bool>false</bool>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_8">
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>140</y>
+             <width>72</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>持续时间(s):</string>
            </property>
           </widget>
          </widget>

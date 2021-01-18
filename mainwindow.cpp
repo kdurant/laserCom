@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <QElapsedTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -151,18 +152,21 @@ void MainWindow::initSignalSlot()
         qDebug() << total_len;
     });
 
+    connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
+        testStatus = false;
+    });
+
     connect(ui->btn_sendTest, &QPushButton::pressed, this, [this]() {
-        testStatus = !testStatus;
-        if(testStatus)
-            ui->btn_sendTest->setText("Stop Test");
-        else
-            ui->btn_sendTest->setText("Start Test");
+        testStatus = true;
 
         QByteArray data(1446, 0);
         for(int i = 0; i < 1446; i++)
             data[i] = i % 256;
-        while(testStatus)
+
+        while(true)
         {
+            if(!testStatus)
+                break;
             tcpSocket->write(data);
             QThread::usleep(1);
             QCoreApplication::processEvents();

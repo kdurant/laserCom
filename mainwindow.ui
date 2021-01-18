@@ -153,7 +153,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="send">
        <attribute name="title">
@@ -298,6 +298,55 @@
        <attribute name="title">
         <string>接收机</string>
        </attribute>
+       <widget class="QPushButton" name="btn_saveFile">
+        <property name="geometry">
+         <rect>
+          <x>24</x>
+          <y>79</y>
+          <width>150</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>saveFile</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_saveFileName">
+        <property name="geometry">
+         <rect>
+          <x>180</x>
+          <y>80</y>
+          <width>306</width>
+          <height>20</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="lineEdit_saveTimeout">
+        <property name="geometry">
+         <rect>
+          <x>176</x>
+          <y>121</y>
+          <width>306</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_10">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>120</y>
+          <width>86</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>timeout(s):</string>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="test">
        <attribute name="title">

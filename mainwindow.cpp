@@ -56,12 +56,16 @@ void MainWindow::initUI()
 
 void MainWindow::initSignalSlot()
 {
-    QObject::connect(tcpSocket, &QTcpSocket::readyRead, this, [this]() {
+    connect(tcpSocket, &QTcpSocket::readyRead, this, [this]() {
         QByteArray buffer;
         buffer = tcpSocket->readAll();
-        ui->plainTextEdit_at->appendPlainText(buffer);
+
+        if(saveFileName.isEmpty())
+            ui->plainTextEdit_at->appendPlainText(buffer);
     });
-    //    QObject::connect(socket, &QTcpSocket::disconnected, this, &MainWindow::socket_Disconnected);
+    connect(tcpSocket, &QTcpSocket::disconnected, this, [this]() {
+        ui->rbt_connect->setChecked(false);
+    });
     connect(ui->rbt_connect, &QRadioButton::toggled, this, [this]() {
         if(ui->rbt_connect->isChecked() == true)
         {
@@ -171,6 +175,10 @@ void MainWindow::initSignalSlot()
             QThread::usleep(1);
             QCoreApplication::processEvents();
         }
+    });
+
+    connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]() {
+        saveFileName = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
     });
 }
 

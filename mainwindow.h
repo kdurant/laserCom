@@ -49,6 +49,7 @@ private:
     QTcpSocket *tcpSocket;
     qint32      tcpStatus;
     AT          at;
-    bool       testStatus;
+    bool        testStatus;
+    QString     saveFileName;
 };
 #endif  // MAINWINDOW_H

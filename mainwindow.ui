@@ -243,6 +243,24 @@
             <string>start test</string>
            </property>
           </widget>
+          <widget class="QPushButton" name="btn_stopTest">
+           <property name="geometry">
+            <rect>
+             <x>240</x>
+             <y>80</y>
+             <width>161</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>18</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>stop test</string>
+           </property>
+          </widget>
          </widget>
         </item>
        </layout>

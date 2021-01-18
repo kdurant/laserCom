@@ -39,3 +39,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     res/res.qrc
+
+DESTDIR = $$absolute_path($${_PRO_FILE_PWD_}/bin/)

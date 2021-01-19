@@ -5,9 +5,12 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    eventloop(new QEventLoop()),
+    timer(new QTimer()),
     tcpPort(17),
     tcpSocket(new QTcpSocket()),
-    testStatus(false)
+    testStatus(false),
+    isSaveFile(false)
 {
     ui->setupUi(this);
 
@@ -60,7 +63,12 @@ void MainWindow::initSignalSlot()
         QByteArray buffer;
         buffer = tcpSocket->readAll();
 
-        if(saveFileName.isEmpty())
+        if(isSaveFile)
+        {
+            saveFileHandle.write(buffer);
+            timer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
+        }
+        else
             ui->plainTextEdit_at->appendPlainText(buffer);
     });
     connect(tcpSocket, &QTcpSocket::disconnected, this, [this]() {
@@ -78,7 +86,8 @@ void MainWindow::initSignalSlot()
                 return;
             }
 
-            tcpSocket->connectToHost(deviceIP, tcpPort);
+            //            tcpSocket->connectToHost(deviceIP, tcpPort);
+            tcpSocket->connectToHost("127.0.0.1", tcpPort);
 
             if(tcpSocket->waitForConnected(3000))
             {
@@ -179,6 +188,29 @@ void MainWindow::initSignalSlot()
 
     connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]() {
         saveFileName = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
+        ui->lineEdit_saveFileName->setText(saveFileName);
+    });
+
+    connect(ui->btn_startRecvFile, &QPushButton::pressed, this, [this]() {
+        if(ui->lineEdit_saveFileName->text().isEmpty())
+        {
+            QMessageBox::warning(this, "warning", "请设置文件名");
+            return;
+        }
+        ui->btn_startRecvFile->setEnabled(false);
+        isSaveFile = true;
+
+        saveFileHandle.setFileName(saveFileName);
+        saveFileHandle.open(QIODevice::WriteOnly);
+
+        QEventLoop eventloop;
+        connect(timer, SIGNAL(timeout()), &eventloop, SLOT(quit()));
+        timer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
+        timer->start();
+        eventloop.exec();
+        isSaveFile = false;
+        saveFileHandle.close();
+        ui->btn_startRecvFile->setEnabled(true);
     });
 }
 

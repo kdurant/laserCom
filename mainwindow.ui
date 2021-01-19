@@ -331,7 +331,7 @@
          </rect>
         </property>
         <property name="text">
-         <string/>
+         <string>5</string>
         </property>
        </widget>
        <widget class="QLabel" name="label_10">
@@ -345,6 +345,19 @@
         </property>
         <property name="text">
          <string>timeout(s):</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btn_startRecvFile">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>170</y>
+          <width>150</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>startRecvFile</string>
         </property>
        </widget>
       </widget>

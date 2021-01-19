@@ -10,6 +10,7 @@
 #include <QThread>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QFile>
 
 #include "at.h"
 
@@ -42,7 +43,9 @@ private:
     Ui::MainWindow *ui;
     QSettings *     configIni;
 
-    qint32 tcpPort;
+    QEventLoop *eventloop;
+    QTimer *    timer;
+    qint32      tcpPort;
 
     QString     deviceIP;
     QString     pcIP;
@@ -50,6 +53,8 @@ private:
     qint32      tcpStatus;
     AT          at;
     bool        testStatus;
+    QFile       saveFileHandle;
     QString     saveFileName;
+    bool        isSaveFile;
 };
 #endif  // MAINWINDOW_H

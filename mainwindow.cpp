@@ -31,13 +31,15 @@ void MainWindow::initParameter()
 {
     pcIP = read_ip_address();
     ui->lineEdit_pcIP->setText(pcIP);
+
+    deviceIP = configIni->value("System/deviceIP").toString();
 }
 
 //configIni->setValue("Laser/freq", 1111);
 void MainWindow::saveParameter()
 {
-    configIni->setValue("System/RadarType", "land");
-    configIni->setValue("Laser/freq", 1111);
+    //    configIni->setValue("System/RadarType", "land");
+    //    configIni->setValue("Laser/freq", 1111);
 }
 
 void MainWindow::initUI()
@@ -56,6 +58,7 @@ void MainWindow::initUI()
         ui->comboBox_setup->addItem(i.context);
     }
     ui->progressBar_sendFile->setValue(0);
+    ui->lineEdit_deviceIP->setText(deviceIP);
 }
 
 void MainWindow::initSignalSlot()
@@ -115,7 +118,7 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_exeSend, &QPushButton::pressed, this, [this]() {
-        QString data = "AT+" + ui->comboBox_query->currentText() + "\r\n";
+        QString data = "AT+" + ui->comboBox_exe->currentText() + "\r\n";
         tcpSocket->write(data.toLatin1());
     });
 
@@ -123,7 +126,7 @@ void MainWindow::initSignalSlot()
         QString para = ui->lineEdit_setup->text();
         if(para.length() != 0)
         {
-            QString data = "AT+" + ui->comboBox_query->currentText() + "=" + para + "\r\n";
+            QString data = "AT+" + ui->comboBox_setup->currentText() + "=" + para + "\r\n";
             tcpSocket->write(data.toLatin1());
         }
     });

@@ -173,8 +173,8 @@ void MainWindow::initSignalSlot()
     connect(ui->btn_sendTest, &QPushButton::pressed, this, [this]() {
         testStatus = true;
 
-        QByteArray data(1446, 0);
-        for(int i = 0; i < 1446; i++)
+        QByteArray data(1446 * 30, 0);
+        for(int i = 0; i < data.size(); i++)
             data[i] = i % 256;
         qint64 sendCnt = 0;
         while(true)
@@ -182,7 +182,7 @@ void MainWindow::initSignalSlot()
             if(!testStatus)
                 break;
             tcpSocket->write(data);
-            sendCnt += 1446;
+            sendCnt += data.size();
             ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
                                        QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
                                        QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");

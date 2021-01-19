@@ -55,6 +55,7 @@ void MainWindow::initUI()
     {
         ui->comboBox_setup->addItem(i.context);
     }
+    ui->progressBar_sendFile->setValue(0);
 }
 
 void MainWindow::initSignalSlot()
@@ -86,8 +87,8 @@ void MainWindow::initSignalSlot()
                 return;
             }
 
-            //            tcpSocket->connectToHost(deviceIP, tcpPort);
-            tcpSocket->connectToHost("127.0.0.1", tcpPort);
+            tcpSocket->connectToHost(deviceIP, tcpPort);
+            //            tcpSocket->connectToHost("127.0.0.1", tcpPort);
 
             if(tcpSocket->waitForConnected(3000))
             {
@@ -175,12 +176,16 @@ void MainWindow::initSignalSlot()
         QByteArray data(1446, 0);
         for(int i = 0; i < 1446; i++)
             data[i] = i % 256;
-
+        qint64 sendCnt = 0;
         while(true)
         {
             if(!testStatus)
                 break;
             tcpSocket->write(data);
+            sendCnt += 1446;
+            ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
+                                       QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
+                                       QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
             QThread::usleep(1);
             QCoreApplication::processEvents();
         }

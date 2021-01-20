@@ -6,9 +6,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     eventloop(new QEventLoop()),
-    timer(new QTimer()),
+    recvFileWaitTimer(new QTimer()),
     tcpPort(17),
-    tcpSocket(new QTcpSocket()),
+    tcpClient(new QTcpSocket()),
     testStatus(false),
     isSaveFile(false)
 {
@@ -66,19 +66,19 @@ void MainWindow::initUI()
 
 void MainWindow::initSignalSlot()
 {
-    connect(tcpSocket, &QTcpSocket::readyRead, this, [this]() {
+    connect(tcpClient, &QTcpSocket::readyRead, this, [this]() {
         QByteArray buffer;
-        buffer = tcpSocket->readAll();
+        buffer = tcpClient->readAll();
 
         if(isSaveFile)
         {
             saveFileHandle.write(buffer);
-            timer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
+            recvFileWaitTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
         }
         else
             ui->plainTextEdit_at->appendPlainText(buffer);
     });
-    connect(tcpSocket, &QTcpSocket::disconnected, this, [this]() {
+    connect(tcpClient, &QTcpSocket::disconnected, this, [this]() {
         ui->rbt_connect->setChecked(false);
     });
     connect(ui->rbt_connect, &QRadioButton::toggled, this, [this]() {
@@ -93,10 +93,12 @@ void MainWindow::initSignalSlot()
                 return;
             }
 
-            tcpSocket->connectToHost(deviceIP, tcpPort);
+            tcpClient->connectToHost(deviceIP, tcpPort);
+
+            ui->rbt_connect->setChecked(true);
             //            tcpSocket->connectToHost("127.0.0.1", tcpPort);
 
-            if(tcpSocket->waitForConnected(3000))
+            if(tcpClient->waitForConnected(100))
             {
                 qDebug("Connected!");
             }
@@ -104,25 +106,28 @@ void MainWindow::initSignalSlot()
             {
                 QEventLoop waitLoop;
                 QTimer::singleShot(1000, &waitLoop, &QEventLoop::quit);
+                ui->rbt_connect->setChecked(true);
                 waitLoop.exec();
-                qDebug("Not Connected!");
                 ui->rbt_connect->setChecked(false);
-                //                ui->rbt_disConnect->setChecked(true);
             }
         }
         else
         {
-            tcpSocket->disconnectFromHost();
+            tcpClient->disconnectFromHost();
         }
     });
+    //    connect(tcpClient, &QTcpSocket::stateChanged, this, [this](QAbstractSocket::SocketState socketState) {
+    //        qDebug() << "------" << socketState;
+    //    });
+
     connect(ui->btn_querySend, &QPushButton::pressed, this, [this]() {
         QString data = "AT+" + ui->comboBox_query->currentText() + "?\r\n";
-        tcpSocket->write(data.toLatin1());
+        tcpClient->write(data.toLatin1());
     });
 
     connect(ui->btn_exeSend, &QPushButton::pressed, this, [this]() {
         QString data = "AT+" + ui->comboBox_exe->currentText() + "\r\n";
-        tcpSocket->write(data.toLatin1());
+        tcpClient->write(data.toLatin1());
     });
 
     connect(ui->btn_setupSend, &QPushButton::pressed, this, [this]() {
@@ -130,7 +135,7 @@ void MainWindow::initSignalSlot()
         if(para.length() != 0)
         {
             QString data = "AT+" + ui->comboBox_setup->currentText() + "=" + para + "\r\n";
-            tcpSocket->write(data.toLatin1());
+            tcpClient->write(data.toLatin1());
         }
     });
     connect(ui->btn_selectFile, &QPushButton::pressed, this, [this]() {
@@ -151,7 +156,7 @@ void MainWindow::initSignalSlot()
         QByteArray prefix(1446, 0xff);
         for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
         {
-            tcpSocket->write(prefix);
+            tcpClient->write(prefix);
         }
 
         ui->progressBar_sendFile->setMaximum(QFile(filePath).size());
@@ -165,7 +170,7 @@ void MainWindow::initSignalSlot()
         while(!file.atEnd())
         {
             qint64 len = file.read(buffer, 1446);
-            tcpSocket->write(buffer, len);
+            tcpClient->write(buffer, len);
             total_len += len;
             ui->progressBar_sendFile->setValue(total_len);
         }
@@ -187,7 +192,7 @@ void MainWindow::initSignalSlot()
         {
             if(!testStatus)
                 break;
-            tcpSocket->write(data);
+            tcpClient->write(data);
             sendCnt += data.size();
             ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
                                        QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
@@ -215,9 +220,9 @@ void MainWindow::initSignalSlot()
         saveFileHandle.open(QIODevice::WriteOnly);
 
         QEventLoop eventloop;
-        connect(timer, SIGNAL(timeout()), &eventloop, SLOT(quit()));
-        timer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
-        timer->start();
+        connect(recvFileWaitTimer, SIGNAL(timeout()), &eventloop, SLOT(quit()));
+        recvFileWaitTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
+        recvFileWaitTimer->start();
         eventloop.exec();
         isSaveFile = false;
         saveFileHandle.close();

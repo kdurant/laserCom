@@ -44,12 +44,12 @@ private:
     QSettings *     configIni;
 
     QEventLoop *eventloop;
-    QTimer *    timer;
+    QTimer *    recvFileWaitTimer;
     qint32      tcpPort;
 
     QString     deviceIP;
     QString     pcIP;
-    QTcpSocket *tcpSocket;
+    QTcpSocket *tcpClient;
     qint32      tcpStatus;
     AT          at;
     bool        testStatus;

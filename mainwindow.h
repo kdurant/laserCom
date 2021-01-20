@@ -56,5 +56,6 @@ private:
     QFile       saveFileHandle;
     QString     saveFileName;
     bool        isSaveFile;
+    qint32      frameNumberOfTest;
 };
 #endif  // MAINWINDOW_H

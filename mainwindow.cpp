@@ -32,13 +32,16 @@ void MainWindow::initParameter()
     pcIP = read_ip_address();
     ui->lineEdit_pcIP->setText(pcIP);
 
-    deviceIP = configIni->value("System/deviceIP").toString();
+    deviceIP          = configIni->value("System/deviceIP").toString();
+    frameNumberOfTest = configIni->value("System/frameNumber").toInt();
+    if(frameNumberOfTest > 50 || frameNumberOfTest <= 0)
+        QMessageBox::warning(this, "warning", " 0 < frameNumberOfTest < 50");
 }
 
 //configIni->setValue("Laser/freq", 1111);
 void MainWindow::saveParameter()
 {
-    //    configIni->setValue("System/RadarType", "land");
+    configIni->setValue("System/deviceIP", ui->lineEdit_deviceIP->text());
     //    configIni->setValue("Laser/freq", 1111);
 }
 
@@ -176,7 +179,7 @@ void MainWindow::initSignalSlot()
     connect(ui->btn_sendTest, &QPushButton::pressed, this, [this]() {
         testStatus = true;
 
-        QByteArray data(1446 * 30, 0);
+        QByteArray data(1446 * frameNumberOfTest, 0);
         for(int i = 0; i < data.size(); i++)
             data[i] = i % 256;
         qint64 sendCnt = 0;

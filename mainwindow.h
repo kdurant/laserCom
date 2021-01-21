@@ -56,6 +56,7 @@ private:
     QFile       saveFileHandle;
     QString     saveFileName;
     bool        isSaveFile;
+    qint32      recvFileSize;  // 当前接收到文件的大小
     qint32      frameNumberOfTest;
 };
 #endif  // MAINWINDOW_H

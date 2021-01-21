@@ -167,7 +167,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="send">
        <attribute name="title">
@@ -337,6 +337,13 @@
           </property>
          </widget>
         </item>
+        <item row="2" column="1">
+         <widget class="QLabel" name="label_recvFileSize">
+          <property name="text">
+           <string>Receive File Size:</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="test">
@@ -354,7 +361,7 @@
      <x>0</x>
      <y>0</y>
      <width>802</width>
-     <height>23</height>
+     <height>28</height>
     </rect>
    </property>
   </widget>

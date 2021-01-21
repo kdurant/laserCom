@@ -3,7 +3,7 @@
 #include <QElapsedTimer>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), eventloop(new QEventLoop()), recvFileWaitTimer(new QTimer()), tcpPort(17), tcpClient(new QTcpSocket()), testStatus(false), isSaveFile(false)
+    : QMainWindow(parent), ui(new Ui::MainWindow), eventloop(new QEventLoop()), recvFileWaitTimer(new QTimer()), tcpPort(17), tcpClient(new QTcpSocket()), testStatus(false), isSaveFile(false), recvFileSize(0)
 {
     ui->setupUi(this);
 
@@ -104,6 +104,7 @@ void MainWindow::initSignalSlot()
         }
         else
         {
+            recvFileSize += buffer.size();
             if(ui->plainTextEdit_at->toPlainText().length() > 1024 * 1024)
                 ui->plainTextEdit_at->clear();
             ui->plainTextEdit_at->appendPlainText(buffer);
@@ -263,6 +264,7 @@ void MainWindow::initSignalSlot()
 
         saveFileHandle.setFileName(saveFileName);
         saveFileHandle.open(QIODevice::WriteOnly);
+        recvFileSize = 0;
 
         QEventLoop eventloop;
         connect(recvFileWaitTimer, SIGNAL(timeout()), &eventloop, SLOT(quit()));
@@ -272,6 +274,7 @@ void MainWindow::initSignalSlot()
         isSaveFile = false;
         saveFileHandle.close();
         ui->btn_startRecvFile->setEnabled(true);
+        ui->label_recvFileSize->setText(QString::number(recvFileSize));
     });
 }
 

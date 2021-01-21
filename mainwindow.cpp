@@ -3,7 +3,7 @@
 #include <QElapsedTimer>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), eventloop(new QEventLoop()), recvFileWaitTimer(new QTimer()), tcpPort(17), tcpClient(new QTcpSocket()), testStatus(false), isSaveFile(false)
+    : QMainWindow(parent), ui(new Ui::MainWindow), eventloop(new QEventLoop()), recvFileWaitTimer(new QTimer()), tcpPort(17), tcpClient(new QTcpSocket()), testStatus(false)
 {
     ui->setupUi(this);
 
@@ -100,7 +100,7 @@ void MainWindow::initSignalSlot()
         QByteArray buffer;
         buffer = tcpClient->readAll();
 
-        if(isSaveFile)
+        if(recvFile.isRunning)
         {
             saveFileHandle.write(buffer);
             recvFileWaitTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
@@ -263,7 +263,7 @@ void MainWindow::initSignalSlot()
             return;
         }
         ui->btn_startRecvFile->setEnabled(false);
-        isSaveFile = true;
+        recvFile.isRunning = true;
 
         saveFileHandle.setFileName(saveFileName);
         saveFileHandle.open(QIODevice::WriteOnly);
@@ -274,7 +274,7 @@ void MainWindow::initSignalSlot()
         recvFileWaitTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
         recvFileWaitTimer->start();
         eventloop.exec();
-        isSaveFile = false;
+        recvFile.isRunning = false;
         saveFileHandle.close();
         ui->btn_startRecvFile->setEnabled(true);
         ui->label_recvFileSize->setText(QString::number(recvFile.size));

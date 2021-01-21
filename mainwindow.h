@@ -64,8 +64,6 @@ private:
     struct RecvFile recvFile;
     QFile           saveFileHandle;
     QString         saveFileName;
-    bool            isSaveFile;
-    //    qint32          recvFile.size;  // 当前接收到文件的大小
 
     qint32 frameNumberOfTest;
 };

@@ -42,8 +42,8 @@ public:
 private:
     struct RecvFile
     {
-        QString fileName;
-        QFile   fileHandle;
+        QString name;
+        QFile   handle;
         bool    isRunning;  // 是否正在接收数据
         bool    size;       // 接收到的文件长度
     };
@@ -62,8 +62,6 @@ private:
     bool        testStatus;
 
     struct RecvFile recvFile;
-    QFile           saveFileHandle;
-    QString         saveFileName;
 
     qint32 frameNumberOfTest;
 };

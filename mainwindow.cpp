@@ -102,7 +102,7 @@ void MainWindow::initSignalSlot()
 
         if(recvFile.isRunning)
         {
-            saveFileHandle.write(buffer);
+            recvFile.handle.write(buffer);
             recvFileWaitTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
         }
         else
@@ -252,8 +252,8 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]() {
-        saveFileName = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
-        ui->lineEdit_saveFileName->setText(saveFileName);
+        recvFile.name = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
+        ui->lineEdit_saveFileName->setText(recvFile.name);
     });
 
     connect(ui->btn_startRecvFile, &QPushButton::pressed, this, [this]() {
@@ -265,8 +265,8 @@ void MainWindow::initSignalSlot()
         ui->btn_startRecvFile->setEnabled(false);
         recvFile.isRunning = true;
 
-        saveFileHandle.setFileName(saveFileName);
-        saveFileHandle.open(QIODevice::WriteOnly);
+        recvFile.handle.setFileName(recvFile.name);
+        recvFile.handle.open(QIODevice::WriteOnly);
         recvFile.size = 0;
 
         QEventLoop eventloop;
@@ -275,7 +275,7 @@ void MainWindow::initSignalSlot()
         recvFileWaitTimer->start();
         eventloop.exec();
         recvFile.isRunning = false;
-        saveFileHandle.close();
+        recvFile.handle.close();
         ui->btn_startRecvFile->setEnabled(true);
         ui->label_recvFileSize->setText(QString::number(recvFile.size));
     });

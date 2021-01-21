@@ -51,17 +51,51 @@ void MainWindow::initUI()
     {
         ui->comboBox_query->addItem(i.context);
     }
+    ui->comboBox_query->setToolTip(at.AT_query[0].hint);
     for(auto i : at.AT_exe)
     {
         ui->comboBox_exe->addItem(i.context);
     }
+    ui->comboBox_exe->setToolTip(at.AT_exe[0].hint);
 
     for(auto i : at.AT_setup)
     {
         ui->comboBox_setup->addItem(i.context);
     }
+    ui->comboBox_setup->setToolTip(at.AT_setup[0].hint);
+
     ui->progressBar_sendFile->setValue(0);
     ui->lineEdit_deviceIP->setText(deviceIP);
+
+    connect(ui->comboBox_query, &QComboBox::currentTextChanged, this, [this]() {
+        if(ui->comboBox_query->currentText() == at.AT_query[0].context)
+        {
+            ui->comboBox_query->setToolTip(at.AT_query[0].hint);
+        }
+        else if(ui->comboBox_query->currentText() == at.AT_query[1].context)
+        {
+            ui->comboBox_query->setToolTip(at.AT_query[1].hint);
+        }
+    });
+    connect(ui->comboBox_exe, &QComboBox::currentTextChanged, this, [this]() {
+        if(ui->comboBox_exe->currentText() == at.AT_exe[0].context)
+        {
+            ui->comboBox_exe->setToolTip(at.AT_exe[0].hint);
+        }
+    });
+
+    connect(ui->comboBox_setup, &QComboBox::currentTextChanged, this, [this]() {
+        if(ui->comboBox_setup->currentText() == at.AT_setup[0].context)
+        {
+            ui->lineEdit_setup->setText("900");
+            ui->comboBox_setup->setToolTip(at.AT_setup[0].hint);
+        }
+        else if(ui->comboBox_setup->currentText() == at.AT_setup[1].context)
+        {
+            ui->lineEdit_setup->setText("5");
+            ui->comboBox_setup->setToolTip(at.AT_setup[1].hint);
+        }
+    });
 }
 
 void MainWindow::initSignalSlot()
@@ -76,7 +110,11 @@ void MainWindow::initSignalSlot()
             recvFileWaitTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
         }
         else
+        {
+            if(ui->plainTextEdit_at->toPlainText().length() > 1024 * 1024)
+                ui->plainTextEdit_at->clear();
             ui->plainTextEdit_at->appendPlainText(buffer);
+        }
     });
     connect(tcpClient, &QTcpSocket::disconnected, this, [this]() {
         ui->rbt_connect->setChecked(false);
@@ -139,7 +177,7 @@ void MainWindow::initSignalSlot()
         }
     });
     connect(ui->btn_selectFile, &QPushButton::pressed, this, [this]() {
-        QString filePath = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));  //选择路径
+        QString filePath = QFileDialog::getOpenFileName(this, tr("选择文件"), "", tr("*"));  //选择路径
         if(filePath.size() == 0)
             return;
         ui->lineEdit_sendFile->setText(filePath);

@@ -43,6 +43,7 @@ void MainWindow::saveParameter()
 
 void MainWindow::initUI()
 {
+    setWindowTitle("激光通信测试软件");
     for(auto i : at.queryCommond)
     {
         ui->comboBox_query->addItem(i.context);

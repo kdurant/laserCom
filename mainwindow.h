@@ -40,6 +40,13 @@ public:
     QString read_ip_address();
 
 private:
+    struct RecvFile
+    {
+        QString fileName;
+        QFile   fileHandle;
+        bool    isRunning;  // 是否正在接收数据
+        bool    size;       // 接收到的文件长度
+    };
     Ui::MainWindow *ui;
     QSettings *     configIni;
 
@@ -53,10 +60,13 @@ private:
     qint32      tcpStatus;
     AT          at;
     bool        testStatus;
-    QFile       saveFileHandle;
-    QString     saveFileName;
-    bool        isSaveFile;
-    qint32      recvFileSize;  // 当前接收到文件的大小
-    qint32      frameNumberOfTest;
+
+    struct RecvFile recvFile;
+    QFile           saveFileHandle;
+    QString         saveFileName;
+    bool            isSaveFile;
+    //    qint32          recvFile.size;  // 当前接收到文件的大小
+
+    qint32 frameNumberOfTest;
 };
 #endif  // MAINWINDOW_H

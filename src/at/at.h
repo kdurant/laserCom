@@ -11,15 +11,15 @@ typedef struct _instruction_
 class AT
 {
 public:
-    QVector<AT_INST> AT_query = {
+    QVector<AT_INST> queryCommond = {
         {"CGMR", "查询设备版本号"},
         {"CGSN", "查询设备SN号"},
     };
 
-    QVector<AT_INST> AT_exe = {
+    QVector<AT_INST> exeCommand = {
         {"NSPA", "保存设备参数"},
     };
-    QVector<AT_INST> AT_setup = {
+    QVector<AT_INST> setupCommand = {
         {"SDAC", "设置DAC默认高压"},
         {"PCKI", "设置发送数据包间隔(us)"},
     };

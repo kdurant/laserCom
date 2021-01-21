@@ -47,53 +47,53 @@ void MainWindow::saveParameter()
 
 void MainWindow::initUI()
 {
-    for(auto i : at.AT_query)
+    for(auto i : at.queryCommond)
     {
         ui->comboBox_query->addItem(i.context);
     }
-    ui->comboBox_query->setToolTip(at.AT_query[0].hint);
-    for(auto i : at.AT_exe)
+    ui->comboBox_query->setToolTip(at.queryCommond[0].hint);
+    for(auto i : at.exeCommand)
     {
         ui->comboBox_exe->addItem(i.context);
     }
-    ui->comboBox_exe->setToolTip(at.AT_exe[0].hint);
+    ui->comboBox_exe->setToolTip(at.exeCommand[0].hint);
 
-    for(auto i : at.AT_setup)
+    for(auto i : at.setupCommand)
     {
         ui->comboBox_setup->addItem(i.context);
     }
-    ui->comboBox_setup->setToolTip(at.AT_setup[0].hint);
+    ui->comboBox_setup->setToolTip(at.setupCommand[0].hint);
 
     ui->progressBar_sendFile->setValue(0);
     ui->lineEdit_deviceIP->setText(deviceIP);
 
     connect(ui->comboBox_query, &QComboBox::currentTextChanged, this, [this]() {
-        if(ui->comboBox_query->currentText() == at.AT_query[0].context)
+        if(ui->comboBox_query->currentText() == at.queryCommond[0].context)
         {
-            ui->comboBox_query->setToolTip(at.AT_query[0].hint);
+            ui->comboBox_query->setToolTip(at.queryCommond[0].hint);
         }
-        else if(ui->comboBox_query->currentText() == at.AT_query[1].context)
+        else if(ui->comboBox_query->currentText() == at.queryCommond[1].context)
         {
-            ui->comboBox_query->setToolTip(at.AT_query[1].hint);
+            ui->comboBox_query->setToolTip(at.queryCommond[1].hint);
         }
     });
     connect(ui->comboBox_exe, &QComboBox::currentTextChanged, this, [this]() {
-        if(ui->comboBox_exe->currentText() == at.AT_exe[0].context)
+        if(ui->comboBox_exe->currentText() == at.exeCommand[0].context)
         {
-            ui->comboBox_exe->setToolTip(at.AT_exe[0].hint);
+            ui->comboBox_exe->setToolTip(at.exeCommand[0].hint);
         }
     });
 
     connect(ui->comboBox_setup, &QComboBox::currentTextChanged, this, [this]() {
-        if(ui->comboBox_setup->currentText() == at.AT_setup[0].context)
+        if(ui->comboBox_setup->currentText() == at.setupCommand[0].context)
         {
             ui->lineEdit_setup->setText("900");
-            ui->comboBox_setup->setToolTip(at.AT_setup[0].hint);
+            ui->comboBox_setup->setToolTip(at.setupCommand[0].hint);
         }
-        else if(ui->comboBox_setup->currentText() == at.AT_setup[1].context)
+        else if(ui->comboBox_setup->currentText() == at.setupCommand[1].context)
         {
             ui->lineEdit_setup->setText("5");
-            ui->comboBox_setup->setToolTip(at.AT_setup[1].hint);
+            ui->comboBox_setup->setToolTip(at.setupCommand[1].hint);
         }
     });
 }

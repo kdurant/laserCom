@@ -2,15 +2,8 @@
 #include "ui_mainwindow.h"
 #include <QElapsedTimer>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    eventloop(new QEventLoop()),
-    recvFileWaitTimer(new QTimer()),
-    tcpPort(17),
-    tcpClient(new QTcpSocket()),
-    testStatus(false),
-    isSaveFile(false)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent), ui(new Ui::MainWindow), eventloop(new QEventLoop()), recvFileWaitTimer(new QTimer()), tcpPort(17), tcpClient(new QTcpSocket()), testStatus(false), isSaveFile(false)
 {
     ui->setupUi(this);
 
@@ -139,6 +132,7 @@ void MainWindow::initSignalSlot()
             if(tcpClient->waitForConnected(100))
             {
                 qDebug("Connected!");
+                tcpStatus = 0x01;
             }
             else
             {
@@ -147,11 +141,13 @@ void MainWindow::initSignalSlot()
                 ui->rbt_connect->setChecked(true);
                 waitLoop.exec();
                 ui->rbt_connect->setChecked(false);
+                tcpStatus = 0x00;
             }
         }
         else
         {
             tcpClient->disconnectFromHost();
+            tcpStatus = 0x00;
         }
     });
     //    connect(tcpClient, &QTcpSocket::stateChanged, this, [this](QAbstractSocket::SocketState socketState) {
@@ -191,6 +187,12 @@ void MainWindow::initSignalSlot()
             return;
         }
 
+        if(tcpStatus == 0x00)
+        {
+            QMessageBox::warning(this, "warning", "请检查TCP是否连接");
+            return;
+        }
+
         QByteArray prefix(1446, 0xff);
         for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
         {
@@ -220,6 +222,11 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_sendTest, &QPushButton::pressed, this, [this]() {
+        if(tcpStatus == 0x00)
+        {
+            QMessageBox::warning(this, "warning", "请检查TCP是否连接");
+            return;
+        }
         testStatus = true;
 
         QByteArray data(1446 * frameNumberOfTest, 0);

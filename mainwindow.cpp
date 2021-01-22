@@ -2,8 +2,15 @@
 #include "ui_mainwindow.h"
 #include <QElapsedTimer>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), eventloop(new QEventLoop()), recvFileWaitTimer(new QTimer()), tcpPort(17), tcpClient(new QTcpSocket()), testStatus(false)
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    eventloop(new QEventLoop()),
+    recvFileWaitTimer(new QTimer()),
+    tcpPort(17),
+    tcpClient(new QTcpSocket()),
+    tcpStatus(0),
+    testStatus(false)
 {
     ui->setupUi(this);
 
@@ -108,6 +115,12 @@ void MainWindow::initSignalSlot()
         }
         else
         {
+            QByteArray judge(10, 0xff);
+            if(buffer.mid(0, 10) == judge)
+            {
+                recvFile.headNumber++;
+                return;
+            }
             recvFile.size += buffer.size();
             if(ui->plainTextEdit_at->toPlainText().length() > 1024 * 1024)
                 ui->plainTextEdit_at->clear();
@@ -263,8 +276,14 @@ void MainWindow::initSignalSlot()
             QMessageBox::warning(this, "warning", "请设置文件名");
             return;
         }
+        if(tcpStatus == 0x00)
+        {
+            QMessageBox::warning(this, "warning", "请检查TCP是否连接");
+            return;
+        }
         ui->btn_startRecvFile->setEnabled(false);
-        recvFile.isRunning = true;
+        recvFile.isRunning  = true;
+        recvFile.headNumber = 0;
 
         recvFile.handle.setFileName(recvFile.name);
         recvFile.handle.open(QIODevice::WriteOnly);
@@ -278,7 +297,10 @@ void MainWindow::initSignalSlot()
         recvFile.isRunning = false;
         recvFile.handle.close();
         ui->btn_startRecvFile->setEnabled(true);
-        ui->label_recvFileSize->setText(QString::number(recvFile.size));
+        ui->label_recvFileSize->setText("接收文件大小(Bytes):" +
+                                        QString::number(recvFile.size) +
+                                        "\n无效文件头个数:" +
+                                        QString::number(recvFile.headNumber));
     });
 }
 

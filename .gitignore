@@ -20,6 +20,7 @@ bin
 ##################qt###################
 Debug 
 Release
+DebugRelease
 !compile_flags.txt
 
 # C++ objects and libs

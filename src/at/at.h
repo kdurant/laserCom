@@ -20,7 +20,7 @@ public:
         {"NSPA", "保存设备参数"},
     };
     QVector<AT_INST> setupCommand = {
-        {"SDAC", "设置DAC默认高压"},
+        {"SDAC", "设置DAC默认高压[0, 950]"},
         {"PCKI", "设置发送数据包间隔(us)"},
     };
 };

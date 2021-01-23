@@ -36,6 +36,7 @@ public:
 
     void initUI();
     void initSignalSlot();
+    void userStatusBar();
 
     QString read_ip_address();
 
@@ -45,11 +46,13 @@ private:
         QString name;
         QFile   handle;
         bool    isRunning;   // 是否正在接收数据
-        bool    size;        // 接收到的文件长度
+        qint32  size;        // 接收到的文件长度
         qint32  headNumber;  // 用户校准的无效文件头包数
     };
     Ui::MainWindow *ui;
     QSettings *     configIni;
+    QLabel *        statusLabel;
+    QString         softwareVer;
 
     QEventLoop *eventloop;
     QTimer *    recvFileWaitTimer;
@@ -65,5 +68,6 @@ private:
     struct RecvFile recvFile;
 
     qint32 frameNumberOfTest;
+    qint32 recvByteCnt;
 };
 #endif  // MAINWINDOW_H

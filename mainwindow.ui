@@ -74,30 +74,6 @@
           <string>AT 指令</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>设置指令:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>查询指令:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1" colspan="2">
-           <widget class="QComboBox" name="comboBox_query">
-            <property name="toolTip">
-             <string>shishi</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1" colspan="2">
-           <widget class="QComboBox" name="comboBox_setup"/>
-          </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_2">
             <property name="text">
@@ -105,20 +81,10 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="1" colspan="2">
-           <widget class="QComboBox" name="comboBox_exe"/>
-          </item>
-          <item row="0" column="3">
-           <widget class="QPushButton" name="btn_querySend">
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_3">
             <property name="text">
-             <string>发送</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QPushButton" name="btn_exeSend">
-            <property name="text">
-             <string>发送</string>
+             <string>设置指令:</string>
             </property>
            </widget>
           </item>
@@ -129,10 +95,44 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="0" colspan="4">
+          <item row="5" column="0" colspan="4">
            <widget class="QPlainTextEdit" name="plainTextEdit_at"/>
           </item>
-          <item row="3" column="0" colspan="4">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>查询指令:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1" colspan="2">
+           <widget class="QComboBox" name="comboBox_setup"/>
+          </item>
+          <item row="1" column="3">
+           <widget class="QPushButton" name="btn_exeSend">
+            <property name="text">
+             <string>发送</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" colspan="2">
+           <widget class="QComboBox" name="comboBox_exe"/>
+          </item>
+          <item row="0" column="1" colspan="2">
+           <widget class="QComboBox" name="comboBox_query">
+            <property name="toolTip">
+             <string>shishi</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QPushButton" name="btn_querySend">
+            <property name="text">
+             <string>发送</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0" colspan="3">
            <widget class="QLineEdit" name="lineEdit_setup">
             <property name="toolTip">
              <string/>
@@ -142,6 +142,16 @@
             </property>
             <property name="placeholderText">
              <string>900</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="QPushButton" name="btn_clearRecv">
+            <property name="toolTip">
+             <string>清空接收数据窗口以及接收计数值</string>
+            </property>
+            <property name="text">
+             <string>Clear</string>
             </property>
            </widget>
           </item>

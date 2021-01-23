@@ -5,12 +5,15 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    statusLabel(new QLabel()),
+    softwareVer("0.03"),
     eventloop(new QEventLoop()),
     recvFileWaitTimer(new QTimer()),
     tcpPort(17),
     tcpClient(new QTcpSocket()),
     tcpStatus(0),
-    testStatus(false)
+    testStatus(false),
+    recvByteCnt(0)
 {
     ui->setupUi(this);
 
@@ -19,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
     initParameter();
     initUI();
     initSignalSlot();
+    userStatusBar();
 
     recvFile.isRunning = false;
     recvFile.size      = 0;
@@ -32,7 +36,10 @@ MainWindow::~MainWindow()
 // configIni->value("System/oceanPort")
 void MainWindow::initParameter()
 {
-    pcIP = read_ip_address();
+    if(configIni->value("System/mode").toString() == "debug")
+        pcIP = "127.0.0.1";
+    else
+        pcIP = read_ip_address();
     ui->lineEdit_pcIP->setText(pcIP);
 
     deviceIP          = configIni->value("System/deviceIP").toString();
@@ -107,10 +114,13 @@ void MainWindow::initSignalSlot()
     connect(tcpClient, &QTcpSocket::readyRead, this, [this]() {
         QByteArray buffer;
         buffer = tcpClient->readAll();
+        recvByteCnt += buffer.size();
+        statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
 
         if(recvFile.isRunning)
         {
             recvFile.handle.write(buffer);
+            recvFile.size += buffer.size();
             recvFileWaitTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
         }
         else
@@ -121,7 +131,6 @@ void MainWindow::initSignalSlot()
                 recvFile.headNumber++;
                 return;
             }
-            recvFile.size += buffer.size();
             if(ui->plainTextEdit_at->toPlainText().length() > 1024 * 1024)
                 ui->plainTextEdit_at->clear();
             ui->plainTextEdit_at->appendPlainText(buffer);
@@ -145,7 +154,6 @@ void MainWindow::initSignalSlot()
             tcpClient->connectToHost(deviceIP, tcpPort);
 
             ui->rbt_connect->setChecked(true);
-            //            tcpSocket->connectToHost("127.0.0.1", tcpPort);
 
             if(tcpClient->waitForConnected(100))
             {
@@ -302,6 +310,22 @@ void MainWindow::initSignalSlot()
                                         "\n无效文件头个数:" +
                                         QString::number(recvFile.headNumber));
     });
+
+    connect(ui->btn_clearRecv, &QPushButton::pressed, this, [this]() {
+        ui->plainTextEdit_at->clear();
+        recvByteCnt = 0;
+        statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
+    });
+}
+
+void MainWindow::userStatusBar()
+{
+    statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
+    ui->statusbar->addPermanentWidget(statusLabel);
+
+    QLabel *softwareLabel = new QLabel();
+    softwareLabel->setText("软件版本：" + softwareVer);
+    ui->statusbar->addPermanentWidget(softwareLabel);
 }
 
 QString MainWindow::read_ip_address()

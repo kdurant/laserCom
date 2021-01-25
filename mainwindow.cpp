@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     statusLabel(new QLabel()),
-    softwareVer("0.04"),
+    softwareVer("0.05"),
     eventloop(new QEventLoop()),
     recvFileWaitTimer(new QTimer()),
     tcpPort(17),
@@ -26,6 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     recvFile.isRunning = false;
     recvFile.size      = 0;
+
+    ui->label_changeLog->setText("v0.05: 测试数据设置为递增ascii字符");
 }
 
 MainWindow::~MainWindow()
@@ -53,7 +55,7 @@ void MainWindow::initParameter()
 //configIni->setValue("Laser/freq", 1111);
 void MainWindow::saveParameter()
 {
-    configIni->setValue("System/deviceIP", ui->lineEdit_deviceIP->text());
+    //    configIni->setValue("System/deviceIP", ui->lineEdit_deviceIP->text());
     //    configIni->setValue("Laser/freq", 1111);
 }
 
@@ -257,16 +259,39 @@ void MainWindow::initSignalSlot()
         }
         testStatus = true;
 
-        QByteArray data(1446 * frameNumberOfTest, 0);
+        QByteArray data(1446, 0);
         for(int i = 0; i < data.size(); i++)
-            data[i] = i % 256;
+        {
+            uint8_t pad = static_cast<uint8_t>(i / 238) + 0x31;
+            data[i]     = pad;
+        }
         qint64 sendCnt = 0;
+
+        int number = ui->lineEdit_testFrameNumber->text().toInt();
+        if(number != 0)
+        {
+            for(int i = 0; i < number; i++)
+            {
+                tcpClient->write(data);
+                sendCnt += data.size();
+                ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
+                                           QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
+                                           QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
+            }
+            return;
+        }
+        QByteArray data1(238 * 6 * frameNumberOfTest, 0);
+        for(int i = 0; i < data.size(); i++)
+        {
+            uint8_t pad = static_cast<uint8_t>(i / 238) + 0x31;
+            data[i]     = pad;
+        }
         while(true)
         {
             if(!testStatus)
                 break;
-            tcpClient->write(data);
-            sendCnt += data.size();
+            tcpClient->write(data1);
+            sendCnt += data1.size();
             ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
                                        QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
                                        QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");

@@ -69,6 +69,6 @@ private:
 
     qint32 frameNumberOfTest;
     qint32 recvByteCnt;
-    qint32 lenPerPrefix;
+    qint32 lenPerPrefix;  // 发送文件前缀长度
 };
 #endif  // MAINWINDOW_H

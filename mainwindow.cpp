@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     statusLabel(new QLabel()),
-    softwareVer("0.03"),
+    softwareVer("0.04"),
     eventloop(new QEventLoop()),
     recvFileWaitTimer(new QTimer()),
     tcpPort(17),
@@ -41,6 +41,8 @@ void MainWindow::initParameter()
     else
         pcIP = read_ip_address();
     ui->lineEdit_pcIP->setText(pcIP);
+
+    lenPerPrefix = configIni->value("SendFile/lenPerPrefix").toInt();
 
     deviceIP          = configIni->value("System/deviceIP").toString();
     frameNumberOfTest = configIni->value("System/frameNumber").toInt();
@@ -219,7 +221,7 @@ void MainWindow::initSignalSlot()
             return;
         }
 
-        QByteArray prefix(1446, 0xff);
+        QByteArray prefix(lenPerPrefix, 0xff);
         for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
         {
             tcpClient->write(prefix);

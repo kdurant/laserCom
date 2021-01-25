@@ -69,5 +69,6 @@ private:
 
     qint32 frameNumberOfTest;
     qint32 recvByteCnt;
+    qint32 lenPerPrefix;
 };
 #endif  // MAINWINDOW_H

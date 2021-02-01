@@ -1,7 +1,25 @@
+-I.
 -I./inc
+-I./Debug
 
 -isystem
 D:\Program\mingw64\x86_64-w64-mingw32\include
 
 -isystem
 D:\Program\mingw64\lib\gcc\x86_64-w64-mingw32\7.3.0\include\c++
+
+-fPIC
+-isystem
+D:\Qt\6.0.0\mingw81_64\include
+-isystem
+D:/Qt/6.0.0/mingw81_64/include/QtCore
+-isystem
+D:/Qt/6.0.0/mingw81_64/include/QtGui
+-isystem
+D:/Qt/6.0.0/mingw81_64/include/QtWidgets
+-isystem
+D:/Qt/6.0.0/mingw81_64/include/QtNetwork
+-isystem
+D:/Qt/6.0.0/mingw81_64/include/QtSerialPort
+-isystem
+D:/Qt/6.0.0/mingw81_64/include/QtTest

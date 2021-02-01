@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     statusLabel(new QLabel()),
-    softwareVer("0.05"),
+    //    softwareVer("0.05"),
     eventloop(new QEventLoop()),
     recvFileWaitTimer(new QTimer()),
     tcpPort(17),
@@ -340,6 +340,7 @@ void MainWindow::initSignalSlot()
 
     connect(ui->btn_clearRecv, &QPushButton::pressed, this, [this]() {
         ui->plainTextEdit_at->clear();
+        ui->progressBar_sendFile->setValue(0);
         recvByteCnt = 0;
         statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
     });

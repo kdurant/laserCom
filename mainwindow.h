@@ -52,7 +52,7 @@ private:
     Ui::MainWindow *ui;
     QSettings *     configIni;
     QLabel *        statusLabel;
-    QString         softwareVer;
+    const QString   softwareVer{SOFT_VERSION};
 
     QEventLoop *eventloop;
     QTimer *    recvFileWaitTimer;

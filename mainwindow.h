@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QFile>
+#include <QCryptographicHash>
 
 #include "at.h"
 
@@ -41,14 +42,38 @@ public:
     QString read_ip_address();
 
 private:
+    enum OpStatus
+    {
+        IDLE = 0x00,
+        TEST_MODE,
+        SEND_FILE,
+        RECV_FILE,
+    };
+
     struct RecvFile
     {
-        QString name;
-        QFile   handle;
-        bool    isRunning;   // 是否正在接收数据
-        qint32  size;        // 接收到的文件长度
-        qint32  headNumber;  // 用户校准的无效文件头包数
+        QString    name;
+        QFile      handle;
+        QByteArray blockData;
+        bool       isRunning;  // 是否正在接收数据
+        qint32     size;       // 接收到的文件长度
+        bool       isRecvBlock;
+        QTimer *   blockTimer;
+        QTimer *   fileStopTimer;
     };
+    struct SendFile
+    {
+        bool    isRecvResponse;  // 是否收到响应数据
+        bool    responseStatus;  // 收到接收机的状态
+        bool    isTimeOut;       // 等待接收响应超时
+        bool    sendOk;          // 收到接收机的正确响应，才算发送完成
+        qint32  blockSize;
+        qint32  prefixLen;  // 发送文件前缀长度
+        qint32  requestBlockNumber;
+        qint32  reSendCnt;
+        QTimer *timer;
+    };
+
     Ui::MainWindow *ui;
     QSettings *     configIni;
     QLabel *        statusLabel;
@@ -66,9 +91,12 @@ private:
     bool        testStatus;
 
     struct RecvFile recvFile;
+    OpStatus        opStatus;
 
     qint32 frameNumberOfTest;
     qint32 recvByteCnt;
-    qint32 lenPerPrefix;  // 发送文件前缀长度
+
+    struct SendFile sendFile;
+    QQueue<qint64>  request;
 };
 #endif  // MAINWINDOW_H

@@ -3,12 +3,9 @@
 #include <QElapsedTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    statusLabel(new QLabel()),
+    QMainWindow(parent), ui(new Ui::MainWindow), statusLabel(new QLabel()),
     //    softwareVer("0.05"),
     eventloop(new QEventLoop()),
-    recvFileWaitTimer(new QTimer()),
     tcpPort(17),
     tcpClient(new QTcpSocket()),
     tcpStatus(0),
@@ -24,10 +21,53 @@ MainWindow::MainWindow(QWidget *parent) :
     initSignalSlot();
     userStatusBar();
 
-    recvFile.isRunning = false;
-    recvFile.size      = 0;
+    recvFile.isRunning   = false;
+    recvFile.size        = 0;
+    recvFile.isRecvBlock = false;
+    recvFile.blockTimer  = new QTimer();
+    recvFile.blockTimer->setInterval(10);
+    recvFile.fileStopTimer = new QTimer();
 
-    ui->label_changeLog->setText("v0.05: 测试数据设置为递增ascii字符");
+    connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]() {
+        QString name = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
+        ui->lineEdit_saveFileName->setText(name);
+    });
+
+    connect(recvFile.blockTimer, &QTimer::timeout, this, [&]() {
+        qint32 dataLen = recvFile.blockData.size();
+
+        QByteArray validData     = recvFile.blockData.mid(0, dataLen - 36 * 3);
+        QByteArray checksumField = recvFile.blockData.mid(dataLen - 36 * 3);
+        QByteArray head          = checksumField.mid(0, 16);
+        QByteArray blockNumber   = checksumField.mid(16, 4);
+        QByteArray recv_md5      = checksumField.mid(20, 16);
+
+        QByteArray expected_md5 = QCryptographicHash::hash(validData, QCryptographicHash::Md5);
+
+        if(expected_md5 == recv_md5)
+        {
+            qDebug() << "md5 yes";
+            tcpClient->write(QByteArray(238, 'y'));
+            recvFile.handle.write(validData);
+
+            recvFile.size += validData.size();
+        }
+        else
+        {
+            tcpClient->write(QByteArray(238, 'n'));
+            qDebug() << "md5 no";
+        }
+        recvFile.blockData.clear();
+        recvFile.blockTimer->stop();
+    });
+
+    sendFile.isRecvResponse = false;
+    sendFile.responseStatus = false;
+    sendFile.reSendCnt      = 0;
+    sendFile.isTimeOut      = false;
+    sendFile.timer          = new QTimer();
+
+    ui->label_changeLog->setText(CHANGELOG);
 }
 
 MainWindow::~MainWindow()
@@ -44,7 +84,8 @@ void MainWindow::initParameter()
         pcIP = read_ip_address();
     ui->lineEdit_pcIP->setText(pcIP);
 
-    lenPerPrefix = configIni->value("SendFile/lenPerPrefix").toInt();
+    sendFile.prefixLen = configIni->value("SendFile/lenPerPrefix").toInt();
+    sendFile.blockSize = configIni->value("SendFile/sendBlockSize").toInt();
 
     deviceIP          = configIni->value("System/deviceIP").toString();
     frameNumberOfTest = configIni->value("System/frameNumber").toInt();
@@ -121,20 +162,33 @@ void MainWindow::initSignalSlot()
         recvByteCnt += buffer.size();
         statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
 
-        if(recvFile.isRunning)
+        if(opStatus == OpStatus::SEND_FILE)
         {
-            recvFile.handle.write(buffer);
-            recvFile.size += buffer.size();
-            recvFileWaitTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
+            if(buffer.count('y') > 200)
+            {
+                sendFile.isRecvResponse = true;
+                sendFile.responseStatus = true;
+            }
+            else
+            {
+                sendFile.isRecvResponse = true;
+                sendFile.responseStatus = false;
+            }
+        }
+        else if(opStatus == OpStatus::RECV_FILE)
+        {
+            recvFile.isRecvBlock = true;
+            if(recvFile.isRecvBlock)
+            {
+                recvFile.blockTimer->setInterval(10);
+                recvFile.blockTimer->start();
+            }
+            recvFile.blockData.append(buffer);
+
+            recvFile.fileStopTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
         }
         else
         {
-            QByteArray judge(10, 0xff);
-            if(buffer.mid(0, 10) == judge)
-            {
-                recvFile.headNumber++;
-                return;
-            }
             if(ui->plainTextEdit_at->toPlainText().length() > 1024 * 1024)
                 ui->plainTextEdit_at->clear();
             ui->plainTextEdit_at->appendPlainText(buffer);
@@ -223,28 +277,111 @@ void MainWindow::initSignalSlot()
             return;
         }
 
-        QByteArray prefix(lenPerPrefix, 0xff);
-        for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
-        {
-            tcpClient->write(prefix);
-        }
+        QByteArray prefix(sendFile.prefixLen, 0xff);
+        //        for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
+        //        {
+        //            tcpClient->write(prefix);
+        //        }
 
         ui->progressBar_sendFile->setMaximum(QFile(filePath).size());
         ui->progressBar_sendFile->setValue(0);
 
+        opStatus           = OpStatus::SEND_FILE;
+        sendFile.isTimeOut = false;
+
         QFile file(filePath);
         file.open(QIODevice::ReadOnly);
 
-        char * buffer    = new char[1446];
-        qint64 total_len = 0;
-        while(!file.atEnd())
+        char * buffer        = new char[sendFile.blockSize];
+        qint64 normal_offset = 0;
+
+        // 校验字段总共36*3=108Byte
+        auto generateChecksum = [](char *data, qint32 len, qint32 number) -> QByteArray {
+            auto intToByte = [](int number) -> QByteArray {
+                QByteArray abyte0;
+                abyte0.resize(4);
+                abyte0[0] = (uchar)(0x000000ff & number);
+                abyte0[1] = (uchar)((0x0000ff00 & number) >> 8);
+                abyte0[2] = (uchar)((0x00ff0000 & number) >> 16);
+                abyte0[3] = (uchar)((0xff000000 & number) >> 24);
+                return abyte0;
+            };
+
+            QByteArray res;
+            res.append(16, 0xfe);
+            res.append(intToByte(number));
+
+            QByteArray send_data{QByteArray::fromRawData(data, len)};
+            res.append(QCryptographicHash::hash(send_data, QCryptographicHash::Md5));
+            return res.append(res.append(res));
+        };
+
+        auto sendBlockData = [&](qint64 offset, qint32 block_number) -> qint64 {
+            file.seek(offset);
+            qint64 len = file.read(buffer, sendFile.blockSize);
+            qDebug() << "read file size is = " << len;
+            QByteArray send_data{QByteArray::fromRawData(buffer, len)};
+            send_data.append(generateChecksum(buffer, len, block_number));
+            for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
+            {
+                tcpClient->write(prefix);
+            }
+            tcpClient->write(send_data);
+            //            tcpClient->flush();
+            while(tcpClient->waitForBytesWritten())
+                qDebug() << "write";
+            return len;
+        };
+
+        while(normal_offset < file.size())
         {
-            qint64 len = file.read(buffer, 1446);
-            tcpClient->write(buffer, len);
-            total_len += len;
-            ui->progressBar_sendFile->setValue(total_len);
+            if(request.isEmpty() == false)  // 发送接收机重新请求数据
+            {
+                QThread::msleep(100);  // 解决tcp粘包问题
+                qint64 request_offset = request.dequeue() * sendFile.blockSize;
+                sendBlockData(request_offset, request_offset / sendFile.blockSize);
+                QThread::msleep(100);
+            }
+
+            tcpClient->write(prefix);
+            // 发送
+            qint32 send_len = sendBlockData(normal_offset, normal_offset / sendFile.blockSize);
+            ui->progressBar_sendFile->setValue(normal_offset);
+
+            sendFile.timer->setInterval(1000);
+
+            connect(sendFile.timer, &QTimer::timeout, this, [&]() {
+                qDebug() << "timeout";
+                sendFile.isTimeOut = true;
+            });
+            sendFile.timer->start();
+
+            // 发送完一个数据块后，等待响应或者超时退出
+            while(sendFile.isRecvResponse == false && sendFile.isTimeOut == false)
+            {
+                QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+            }
+
+            sendFile.isRecvResponse = false;
+            if(sendFile.responseStatus == true)
+            {
+                sendFile.responseStatus = false;
+                normal_offset += send_len;
+                continue;
+            }
+            else
+            {
+                sendFile.reSendCnt++;
+            }
+
+            if(sendFile.reSendCnt >= 3)
+            {
+                sendFile.timer->stop();
+                normal_offset += send_len;
+                sendFile.reSendCnt = 0;
+            }
         }
-        qDebug() << total_len;
+        opStatus = OpStatus::IDLE;
     });
 
     connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
@@ -300,11 +437,6 @@ void MainWindow::initSignalSlot()
         }
     });
 
-    connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]() {
-        recvFile.name = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
-        ui->lineEdit_saveFileName->setText(recvFile.name);
-    });
-
     connect(ui->btn_startRecvFile, &QPushButton::pressed, this, [this]() {
         if(ui->lineEdit_saveFileName->text().isEmpty())
         {
@@ -317,25 +449,25 @@ void MainWindow::initSignalSlot()
             return;
         }
         ui->btn_startRecvFile->setEnabled(false);
-        recvFile.isRunning  = true;
-        recvFile.headNumber = 0;
+        recvFile.isRunning = true;
+        opStatus           = MainWindow::RECV_FILE;
 
+        recvFile.name = ui->lineEdit_saveFileName->text();
         recvFile.handle.setFileName(recvFile.name);
         recvFile.handle.open(QIODevice::WriteOnly);
         recvFile.size = 0;
 
         QEventLoop eventloop;
-        connect(recvFileWaitTimer, SIGNAL(timeout()), &eventloop, SLOT(quit()));
-        recvFileWaitTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
-        recvFileWaitTimer->start();
+        connect(recvFile.fileStopTimer, SIGNAL(timeout()), &eventloop, SLOT(quit()));
+        recvFile.fileStopTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
+        recvFile.fileStopTimer->start();
         eventloop.exec();
         recvFile.isRunning = false;
         recvFile.handle.close();
+        opStatus = MainWindow::IDLE;
         ui->btn_startRecvFile->setEnabled(true);
         ui->label_recvFileSize->setText("接收文件大小(Bytes):" +
-                                        QString::number(recvFile.size) +
-                                        "\n无效文件头个数:" +
-                                        QString::number(recvFile.headNumber));
+                                        QString::number(recvFile.size));
     });
 
     connect(ui->btn_clearRecv, &QPushButton::pressed, this, [this]() {

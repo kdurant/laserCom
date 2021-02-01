@@ -11,13 +11,15 @@ args = parser.parse_args()
 server = socket.socket()
 server.bind((args.ip, args.port))
 server.listen(5)
+
 while True:
     print("wait for new tcp client to connect...")
     connection, addr = server.accept()
     print('new client addr is : {0}'.format(addr))
 
-    time.sleep(3)
-    for i in range(5):
-        connection.send(b"wangjun123" * 1000)
+    #time.sleep(3)
+    for i in range(50000000):
+        connection.send(b"n" * 238)
+        time.sleep(0.1)
 
     connection.close()

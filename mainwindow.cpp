@@ -319,10 +319,12 @@ void MainWindow::initSignalSlot()
 
             QByteArray send_data{QByteArray::fromRawData(buffer, len)};
             send_data.append(generateChecksum(buffer, len, block_number));
-            for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
-            {
-                tcpClient->write(prefix);
-            }
+            if(ui->lineEdit_prefixNumber->text().toInt() != 0)
+                send_data.prepend(prefix);
+            //for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
+            //{
+            //tcpClient->write(prefix);
+            //}
             tcpClient->write(send_data);
             //            tcpClient->flush();
             while(tcpClient->waitForBytesWritten())

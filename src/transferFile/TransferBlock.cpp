@@ -27,6 +27,6 @@ QByteArray TransferBlock::generateChecksum(QByteArray& data, qint32 number)
     return res.append(res.append(res));
 }
 
-bool TransferBlock::transfer(){
+bool TransferBlock::sendBlockData(){
 
 };

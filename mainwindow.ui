@@ -224,7 +224,7 @@
            <item row="1" column="1" colspan="2">
             <widget class="QLineEdit" name="lineEdit_prefixNumber">
              <property name="text">
-              <string>0</string>
+              <string>1</string>
              </property>
             </widget>
            </item>

@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include <qdebug.h>
 #include "ui_mainwindow.h"
 #include <QElapsedTimer>
 
@@ -46,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
         if(expected_md5 == recv_md5)
         {
-            qDebug() << "md5 yes";
+            qDebug() << "receve data with correct md5";
             tcpClient->write(QByteArray(238, 'y'));
             recvFile.handle.write(validData);
 
@@ -55,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
         else
         {
             tcpClient->write(QByteArray(238, 'n'));
-            qDebug() << "md5 no";
+            qDebug() << "receve data with wrong md5";
         }
         recvFile.blockData.clear();
         recvFile.blockTimer->stop();
@@ -215,7 +216,6 @@ void MainWindow::initSignalSlot()
 
             if(tcpClient->waitForConnected(100))
             {
-                qDebug("Connected!");
                 tcpStatus = 0x01;
             }
             else
@@ -234,9 +234,6 @@ void MainWindow::initSignalSlot()
             tcpStatus = 0x00;
         }
     });
-    //    connect(tcpClient, &QTcpSocket::stateChanged, this, [this](QAbstractSocket::SocketState socketState) {
-    //        qDebug() << "------" << socketState;
-    //    });
 
     connect(ui->btn_querySend, &QPushButton::pressed, this, [this]() {
         QString data = "AT+" + ui->comboBox_query->currentText() + "?\r\n";
@@ -293,7 +290,7 @@ void MainWindow::initSignalSlot()
         file.open(QIODevice::ReadOnly);
 
         char * buffer        = new char[sendFile.blockSize];
-        qint64 normal_offset = 0;
+        qint32 normal_offset = 0;
 
         // 校验字段总共36*3=108Byte
         auto generateChecksum = [](char *data, qint32 len, qint32 number) -> QByteArray {
@@ -319,7 +316,7 @@ void MainWindow::initSignalSlot()
         auto sendBlockData = [&](qint64 offset, qint32 block_number) -> qint64 {
             file.seek(offset);
             qint64 len = file.read(buffer, sendFile.blockSize);
-            qDebug() << "read file size is = " << len;
+
             QByteArray send_data{QByteArray::fromRawData(buffer, len)};
             send_data.append(generateChecksum(buffer, len, block_number));
             for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
@@ -329,9 +326,14 @@ void MainWindow::initSignalSlot()
             tcpClient->write(send_data);
             //            tcpClient->flush();
             while(tcpClient->waitForBytesWritten())
-                qDebug() << "write";
+                ;
             return len;
         };
+
+        connect(sendFile.timer, &QTimer::timeout, this, [&]() {
+            qDebug() << "Don't receive the correct response, generate a timeout signal";
+            sendFile.isTimeOut = true;
+        });
 
         while(normal_offset < file.size())
         {
@@ -343,17 +345,11 @@ void MainWindow::initSignalSlot()
                 QThread::msleep(100);
             }
 
-            tcpClient->write(prefix);
             // 发送
             qint32 send_len = sendBlockData(normal_offset, normal_offset / sendFile.blockSize);
-            ui->progressBar_sendFile->setValue(normal_offset);
+            qDebug("send %d Bytes", send_len);
 
             sendFile.timer->setInterval(1000);
-
-            connect(sendFile.timer, &QTimer::timeout, this, [&]() {
-                qDebug() << "timeout";
-                sendFile.isTimeOut = true;
-            });
             sendFile.timer->start();
 
             // 发送完一个数据块后，等待响应或者超时退出
@@ -361,12 +357,15 @@ void MainWindow::initSignalSlot()
             {
                 QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
             }
+            sendFile.timer->stop();
 
             sendFile.isRecvResponse = false;
+            sendFile.isTimeOut      = false;
             if(sendFile.responseStatus == true)
             {
                 sendFile.responseStatus = false;
                 normal_offset += send_len;
+                qDebug("Send [success], file position: [%d]", normal_offset);
                 continue;
             }
             else
@@ -376,10 +375,11 @@ void MainWindow::initSignalSlot()
 
             if(sendFile.reSendCnt >= 3)
             {
-                sendFile.timer->stop();
                 normal_offset += send_len;
                 sendFile.reSendCnt = 0;
+                qDebug("Send [failed], file position: [%d]", normal_offset);
             }
+            ui->progressBar_sendFile->setValue(normal_offset);
         }
         opStatus = OpStatus::IDLE;
     });

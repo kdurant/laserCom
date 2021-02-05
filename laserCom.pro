@@ -43,7 +43,7 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-#DEFINES += LOG2FILE
+DEFINES += LOG2FILE
 
 RESOURCES += \
     res/res.qrc

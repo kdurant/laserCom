@@ -28,7 +28,7 @@ public:
     {
         this->transferData = data;
     };
-    bool transfer(void);
+    bool sendBlockData(void);
 };
 
 #endif

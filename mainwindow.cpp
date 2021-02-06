@@ -167,11 +167,14 @@ void MainWindow::initSignalSlot()
         {
             if(buffer.count('y') > 200)
             {
+                qDebug() << "[sendFile]: receive correct response";
                 sendFile.isRecvResponse = true;
                 sendFile.responseStatus = true;
             }
             else
             {
+                qDebug() << "[sendFile]: receive wrong response";
+                sendFile.isRecvResponse = true;
                 sendFile.isRecvResponse = true;
                 sendFile.responseStatus = false;
             }
@@ -337,6 +340,7 @@ void MainWindow::initSignalSlot()
             sendFile.isTimeOut = true;
         });
 
+        qDebug() << "[SendFile]: ------------- start to send file";
         while(normal_offset < file.size())
         {
             if(request.isEmpty() == false)  // 发送接收机重新请求数据
@@ -384,6 +388,7 @@ void MainWindow::initSignalSlot()
             ui->progressBar_sendFile->setValue(normal_offset);
         }
         opStatus = OpStatus::IDLE;
+        qDebug() << "[SendFile]: end to send file\n\n";
     });
 
     connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
@@ -450,6 +455,7 @@ void MainWindow::initSignalSlot()
             QMessageBox::warning(this, "warning", "请检查TCP是否连接");
             return;
         }
+        qDebug() << "[RecvFile]: ------------- start to receive file";
         ui->btn_startRecvFile->setEnabled(false);
         recvFile.isRunning = true;
         opStatus           = MainWindow::RECV_FILE;
@@ -470,6 +476,7 @@ void MainWindow::initSignalSlot()
         ui->btn_startRecvFile->setEnabled(true);
         ui->label_recvFileSize->setText("接收文件大小(Bytes):" +
                                         QString::number(recvFile.size));
+        qDebug() << "[RecvFile]: end to receive file\n\n";
     });
 
     connect(ui->btn_clearRecv, &QPushButton::pressed, this, [this]() {

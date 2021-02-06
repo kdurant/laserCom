@@ -77,7 +77,6 @@ private:
     Ui::MainWindow *ui;
     QSettings *     configIni;
     QLabel *        statusLabel;
-    const QString   softwareVer{SOFT_VERSION};
 
     QEventLoop *eventloop;
     QTimer *    recvFileWaitTimer;

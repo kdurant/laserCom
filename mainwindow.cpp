@@ -486,7 +486,7 @@ void MainWindow::userStatusBar()
     ui->statusbar->addPermanentWidget(statusLabel);
 
     QLabel *softwareLabel = new QLabel();
-    softwareLabel->setText("软件版本：" + softwareVer);
+    softwareLabel->setText("软件版本：" + QString(SOFT_VERSION) + "_" + QString(GIT_DATE) + "_" + QString(GIT_HASH));
     ui->statusbar->addPermanentWidget(softwareLabel);
 }
 

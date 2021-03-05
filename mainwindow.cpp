@@ -440,10 +440,10 @@ void MainWindow::initSignalSlot()
             return;
         }
         QByteArray data1(238 * 6 * frameNumberOfTest, 0);
-        for(int i = 0; i < data.size(); i++)
+        for(int i = 0; i < data1.size(); i++)
         {
             uint8_t pad = static_cast<uint8_t>(i / 238) + 0x31;
-            data[i]     = pad;
+            data1[i]     = pad;
         }
         while(true)
         {

@@ -159,13 +159,39 @@
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="checkBox_autoSet01">
-         <property name="text">
-          <string>自动设置01比</string>
+        <widget class="QGroupBox" name="groupBox_5">
+         <property name="title">
+          <string>参数</string>
          </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QCheckBox" name="checkBox_autoSet01">
+            <property name="text">
+             <string>自动设置01比</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="rbtn_ATShowHex">
+            <property name="text">
+             <string>Hex</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QRadioButton" name="rbtn_ATShowAscii">
+            <property name="text">
+             <string>ASCII</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>

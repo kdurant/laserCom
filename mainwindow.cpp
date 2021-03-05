@@ -195,7 +195,10 @@ void MainWindow::initSignalSlot()
         {
             if(ui->plainTextEdit_at->toPlainText().length() > 1024 * 1024)
                 ui->plainTextEdit_at->clear();
-            ui->plainTextEdit_at->appendPlainText(buffer);
+            if(ui->rbtn_ATShowAscii->isChecked())
+                ui->plainTextEdit_at->appendPlainText(buffer);
+            else if(ui->rbtn_ATShowHex->isChecked())
+                ui->plainTextEdit_at->appendPlainText(buffer.toHex());
         }
     });
     connect(tcpClient, &QTcpSocket::disconnected, this, [this]() {

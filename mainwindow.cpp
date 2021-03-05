@@ -250,6 +250,18 @@ void MainWindow::initSignalSlot()
 
     connect(ui->btn_setupSend, &QPushButton::pressed, this, [this]() {
         QString para = ui->lineEdit_setup->text();
+        quint16 value = 0x00;
+
+        if(ui->comboBox_setup->currentText() == "SDAC")
+        {
+            if(ui->checkBox_autoSet01->isChecked())
+                value = para.toUInt(nullptr, 10);
+            else
+                value = para.toUInt(nullptr, 10) | 0x8000;
+            QString data = "AT+" + ui->comboBox_setup->currentText() + "=" + QString::number(value) + "\r\n";
+            tcpClient->write(data.toLatin1());
+            return;
+        }
         if(para.length() != 0)
         {
             QString data = "AT+" + ui->comboBox_setup->currentText() + "=" + para + "\r\n";

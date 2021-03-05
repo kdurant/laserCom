@@ -57,7 +57,7 @@ RESOURCES += \
 #OTHER_FILES += app.rc
 RC_FILE += app.rc
 
-DESTDIR = $$absolute_path($${_PRO_FILE_PWD_}/bin/)
+#DESTDIR = $$absolute_path($${_PRO_FILE_PWD_}/bin/)
 
 include($$PWD/changelog.pri)
-include($$PWD/deploy.pri)
+#include($$PWD/deploy.pri)

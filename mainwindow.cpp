@@ -254,7 +254,7 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_setupSend, &QPushButton::pressed, this, [this]() {
-        QString para = ui->lineEdit_setup->text();
+        QString para  = ui->lineEdit_setup->text();
         quint16 value = 0x00;
 
         if(ui->comboBox_setup->currentText() == "SDAC")
@@ -329,8 +329,10 @@ void MainWindow::initSignalSlot()
             res.append(intToByte(number));
 
             QByteArray send_data{QByteArray::fromRawData(data, len)};
-            res.append(QCryptographicHash::hash(send_data, QCryptographicHash::Md5));
-            return res.append(res.append(res));
+            QByteArray tmp = res.append(QCryptographicHash::hash(send_data, QCryptographicHash::Md5));
+            res.append(tmp);
+            res.append(tmp);
+            return res;
         };
 
         auto sendBlockData = [&](qint64 offset, qint32 block_number) -> qint64 {
@@ -445,7 +447,7 @@ void MainWindow::initSignalSlot()
         for(int i = 0; i < data1.size(); i++)
         {
             uint8_t pad = static_cast<uint8_t>(i / 238) + 0x31;
-            data1[i]     = pad;
+            data1[i]    = pad;
         }
         while(true)
         {

@@ -199,6 +199,8 @@ void MainWindow::initSignalSlot()
                 ui->plainTextEdit_at->appendPlainText(buffer);
             else if(ui->rbtn_ATShowHex->isChecked())
                 ui->plainTextEdit_at->appendPlainText(buffer.toHex());
+
+            ui->plainTextEdit_at->appendPlainText(QString("\n"));
         }
     });
     connect(tcpClient, &QTcpSocket::disconnected, this, [this]() {
@@ -398,7 +400,7 @@ void MainWindow::initSignalSlot()
             {
                 normal_offset += send_len;
                 sendFile.reSendCnt = 0;
-                qDebug("Send [failed], file position: [%d]", normal_offset);
+                qDebug("---Send [failed], file position: [%d]", normal_offset);
             }
             ui->progressBar_sendFile->setValue(normal_offset);
         }

@@ -17,7 +17,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     configIni = new QSettings("./config.ini", QSettings::IniFormat);
 
-
     sendFile.isRecvResponse = false;
     sendFile.responseStatus = false;
     sendFile.reSendCnt      = 0;
@@ -32,10 +31,9 @@ MainWindow::MainWindow(QWidget *parent) :
     initSignalSlot();
     userStatusBar();
 
-
-    recvFile.isRunning   = false;
-    recvFile.size        = 0;
-    recvFile.blockTimer  = new QTimer();
+    recvFile.isRunning  = false;
+    recvFile.size       = 0;
+    recvFile.blockTimer = new QTimer();
     recvFile.blockTimer->setInterval(ui->lineEdit_blockDataWaitTime->text().toInt(nullptr, 10));
     recvFile.fileStopTimer = new QTimer();
 
@@ -58,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
         if(expected_md5 == recv_md5)
         {
-            if(lastMd5 == recv_md5)   // 发送端没有收到响应信号，重新发送的数据帧
+            if(lastMd5 == recv_md5)  // 发送端没有收到响应信号，重新发送的数据帧
                 qDebug() << "receve correct frame, but had write it to file.";
             else
             {
@@ -77,7 +75,6 @@ MainWindow::MainWindow(QWidget *parent) :
         recvFile.blockData.clear();
         recvFile.blockTimer->stop();
     });
-
 
     ui->label_changeLog->setText(CHANGELOG);
 }
@@ -103,11 +100,9 @@ void MainWindow::initParameter()
 
     if(configIni->contains("SendFile/sendBlockSize"))
         ui->lineEdit_blockSize->setText(configIni->value("SendFile/sendBlockSize").toString());
-    else
-        QMessageBox::warning(this, "warning", "请配置sendBlockSize");
 
     if(configIni->contains("System/deviceIP"))
-        deviceIP          = configIni->value("System/deviceIP").toString();
+        deviceIP = configIni->value("System/deviceIP").toString();
     else
         QMessageBox::warning(this, "warning", "deviceIP使用默认值：192.168.1.10");
 
@@ -118,7 +113,6 @@ void MainWindow::initParameter()
 
     if(frameNumberOfTest > 50 || frameNumberOfTest <= 0)
         QMessageBox::warning(this, "warning", " 0 < frameNumberOfTest < 50");
-
 
     if(configIni->contains("System/repeatNumber"))
         ui->lineEdit_repeatNumber->setText(configIni->value("System/repeatNumber").toString());
@@ -327,10 +321,6 @@ void MainWindow::initSignalSlot()
         }
 
         QByteArray prefix(sendFile.prefixLen, 0xff);
-        //        for(int i = 0; i < ui->lineEdit_prefixNumber->text().toInt(); i++)
-        //        {
-        //            tcpClient->write(prefix);
-        //        }
 
         ui->progressBar_sendFile->setMaximum(QFile(filePath).size());
         ui->progressBar_sendFile->setValue(0);
@@ -341,7 +331,7 @@ void MainWindow::initSignalSlot()
         QFile file(filePath);
         file.open(QIODevice::ReadOnly);
 
-        qint32  blockSize = ui->lineEdit_blockSize->text().toUInt();
+        qint32 blockSize     = ui->lineEdit_blockSize->text().toUInt();
         char * buffer        = new char[blockSize];
         qint32 normal_offset = 0;
 
@@ -419,7 +409,7 @@ void MainWindow::initSignalSlot()
             sendFile.isTimeOut      = false;
             if(sendFile.responseStatus == true)
             {
-                sendFile.reSendCnt = 0;
+                sendFile.reSendCnt      = 0;
                 sendFile.responseStatus = false;
                 normal_offset += send_len;
                 ui->progressBar_sendFile->setValue(normal_offset);
@@ -429,14 +419,16 @@ void MainWindow::initSignalSlot()
             else
             {
                 sendFile.reSendCnt++;
+                ui->statusbar->showMessage(QString("第%1次重发...").arg(sendFile.reSendCnt), 3000);
             }
 
-            if(sendFile.reSendCnt >=  ui->lineEdit_repeatNumber->text().toInt(nullptr, 10))
+            if(sendFile.reSendCnt >= ui->lineEdit_repeatNumber->text().toInt(nullptr, 10))
             {
+                qDebug("---------------Send [failed], file position: [%d]", normal_offset);
+                ui->statusbar->showMessage(QString("文件块（位置：%1)发送失败.").arg(normal_offset), 3000);
+                ui->progressBar_sendFile->setValue(normal_offset);
                 normal_offset += send_len;
                 sendFile.reSendCnt = 0;
-                ui->progressBar_sendFile->setValue(normal_offset);
-                qDebug("---------------Send [failed], file position: [%d]", normal_offset);
             }
         }
         opStatus = OpStatus::IDLE;

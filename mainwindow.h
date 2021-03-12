@@ -82,7 +82,7 @@ private:
     QTimer *    recvFileWaitTimer;
     qint32      tcpPort;
 
-    QString     deviceIP;
+    QString     deviceIP{"192.168.1.10"};
     QString     pcIP;
     QTcpSocket *tcpClient;
     qint32      tcpStatus;
@@ -92,8 +92,10 @@ private:
     struct RecvFile recvFile;
     OpStatus        opStatus;
 
-    qint32 frameNumberOfTest;
+    qint32 frameNumberOfTest{6};
     qint32 recvByteCnt;
+    qint32 repeatNumber{5};
+    qint32 blockDataWaitTime{10};
 
     struct SendFile sendFile;
     QQueue<qint64>  request;

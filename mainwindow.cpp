@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     recvFile.size        = 0;
     recvFile.isRecvBlock = false;
     recvFile.blockTimer  = new QTimer();
-    recvFile.blockTimer->setInterval(10);
+    recvFile.blockTimer->setInterval(blockDataWaitTime);
     recvFile.fileStopTimer = new QTimer();
 
     connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]() {
@@ -36,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(recvFile.blockTimer, &QTimer::timeout, this, [&]() {
         qint32 dataLen = recvFile.blockData.size();
+        qDebug() << "receive block data size = " << dataLen;
 
         QByteArray validData     = recvFile.blockData.mid(0, dataLen - 36 * 3);
         QByteArray checksumField = recvFile.blockData.mid(dataLen - 36 * 3);
@@ -47,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
         if(expected_md5 == recv_md5)
         {
-            qDebug() << "receve data with correct md5";
+            qDebug() << "---------------: receve data with correct md5";
             tcpClient->write(QByteArray(238, 'y'));
             recvFile.handle.write(validData);
 
@@ -56,7 +57,7 @@ MainWindow::MainWindow(QWidget *parent) :
         else
         {
             tcpClient->write(QByteArray(238, 'n'));
-            qDebug() << "receve data with wrong md5";
+            qDebug() << "xxxxxxxxxxxxxxx: receve data with wrong md5";
         }
         recvFile.blockData.clear();
         recvFile.blockTimer->stop();
@@ -67,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent) :
     sendFile.reSendCnt      = 0;
     sendFile.isTimeOut      = false;
     sendFile.timer          = new QTimer();
+    sendFile.prefixLen      = 714;
+    sendFile.blockSize      = 8192;
+    sendFile.timer->setInterval(1000);
 
     ui->label_changeLog->setText(CHANGELOG);
 }
@@ -85,13 +89,39 @@ void MainWindow::initParameter()
         pcIP = read_ip_address();
     ui->lineEdit_pcIP->setText(pcIP);
 
-    sendFile.prefixLen = configIni->value("SendFile/lenPerPrefix").toInt();
-    sendFile.blockSize = configIni->value("SendFile/sendBlockSize").toInt();
+    if(configIni->contains("SendFile/lenPerPrefix"))
+        sendFile.prefixLen = configIni->value("SendFile/lenPerPrefix").toInt();
+    else
+        QMessageBox::warning(this, "warning", "lenPerPrefix使用默认值：714");
 
-    deviceIP          = configIni->value("System/deviceIP").toString();
-    frameNumberOfTest = configIni->value("System/frameNumber").toInt();
+    if(configIni->contains("SendFile/sendBlockSize"))
+        sendFile.blockSize = configIni->value("SendFile/sendBlockSize").toInt();
+    else
+        QMessageBox::warning(this, "warning", "sendBlockSize使用默认值：8192");
+
+    if(configIni->contains("System/deviceIP"))
+        deviceIP          = configIni->value("System/deviceIP").toString();
+    else
+        QMessageBox::warning(this, "warning", "deviceIP使用默认值：192.168.1.10");
+
+    if(configIni->contains("System/frameNumber"))
+        frameNumberOfTest = configIni->value("System/frameNumber").toInt();
+    else
+        QMessageBox::warning(this, "warning", "frameNumber使用默认值：6");
+
     if(frameNumberOfTest > 50 || frameNumberOfTest <= 0)
         QMessageBox::warning(this, "warning", " 0 < frameNumberOfTest < 50");
+
+
+    if(configIni->contains("System/repeatNumber"))
+        repeatNumber = configIni->value("System/repeatNumber").toInt();
+    else
+        QMessageBox::warning(this, "warning", "repeatNumber使用默认值：5");
+
+    if(configIni->contains("System/blockDataWaitTime"))
+        blockDataWaitTime = configIni->value("System/blockDataWaitTime").toInt();
+    else
+        QMessageBox::warning(this, "warning", "blockDataWaitTime使用默认值：20ms");
 }
 
 //configIni->setValue("Laser/freq", 1111);
@@ -184,7 +214,6 @@ void MainWindow::initSignalSlot()
             recvFile.isRecvBlock = true;
             if(recvFile.isRecvBlock)
             {
-                recvFile.blockTimer->setInterval(10);
                 recvFile.blockTimer->start();
             }
             recvFile.blockData.append(buffer);
@@ -373,8 +402,6 @@ void MainWindow::initSignalSlot()
             // 发送
             qint32 send_len = sendBlockData(normal_offset, normal_offset / sendFile.blockSize);
             qDebug("send %d Bytes", send_len);
-
-            sendFile.timer->setInterval(1000);
             sendFile.timer->start();
 
             // 发送完一个数据块后，等待响应或者超时退出
@@ -388,9 +415,11 @@ void MainWindow::initSignalSlot()
             sendFile.isTimeOut      = false;
             if(sendFile.responseStatus == true)
             {
+                sendFile.reSendCnt = 0;
                 sendFile.responseStatus = false;
                 normal_offset += send_len;
-                qDebug("Send [success], file position: [%d]", normal_offset);
+                ui->progressBar_sendFile->setValue(normal_offset);
+                qDebug("---------------Send [success], file position: [%d]", normal_offset);
                 continue;
             }
             else
@@ -398,13 +427,13 @@ void MainWindow::initSignalSlot()
                 sendFile.reSendCnt++;
             }
 
-            if(sendFile.reSendCnt >= 3)
+            if(sendFile.reSendCnt >= repeatNumber)
             {
                 normal_offset += send_len;
                 sendFile.reSendCnt = 0;
-                qDebug("---Send [failed], file position: [%d]", normal_offset);
+                ui->progressBar_sendFile->setValue(normal_offset);
+                qDebug("---------------Send [failed], file position: [%d]", normal_offset);
             }
-            ui->progressBar_sendFile->setValue(normal_offset);
         }
         opStatus = OpStatus::IDLE;
         qDebug() << "[SendFile]: end to send file\n\n";
@@ -446,7 +475,7 @@ void MainWindow::initSignalSlot()
         QByteArray data1(238 * 6 * frameNumberOfTest, 0);
         for(int i = 0; i < data1.size(); i++)
         {
-            uint8_t pad = static_cast<uint8_t>(i / 238) + 0x31;
+            uint8_t pad = static_cast<uint8_t>(i / 238);
             data1[i]    = pad;
         }
         while(true)
@@ -474,6 +503,7 @@ void MainWindow::initSignalSlot()
             QMessageBox::warning(this, "warning", "请检查TCP是否连接");
             return;
         }
+        ui->label_recvFileSize->setText("接收文件大小(Bytes): 0");
         qDebug() << "[RecvFile]: ------------- start to receive file";
         ui->btn_startRecvFile->setEnabled(false);
         recvFile.isRunning = true;

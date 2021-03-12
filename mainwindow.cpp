@@ -36,7 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :
     recvFile.isRunning   = false;
     recvFile.size        = 0;
     recvFile.blockTimer  = new QTimer();
-    recvFile.blockTimer->setInterval(blockDataWaitTime);
+    recvFile.blockTimer->setInterval(ui->lineEdit_blockDataWaitTime->text().toInt(nullptr, 10));
     recvFile.fileStopTimer = new QTimer();
 
     connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]() {
@@ -102,9 +102,9 @@ void MainWindow::initParameter()
         QMessageBox::warning(this, "warning", "lenPerPrefix使用默认值：714");
 
     if(configIni->contains("SendFile/sendBlockSize"))
-        sendFile.blockSize = configIni->value("SendFile/sendBlockSize").toInt();
+        ui->lineEdit_blockSize->setText(configIni->value("SendFile/sendBlockSize").toString());
     else
-        QMessageBox::warning(this, "warning", "sendBlockSize使用默认值：8192");
+        QMessageBox::warning(this, "warning", "请配置sendBlockSize");
 
     if(configIni->contains("System/deviceIP"))
         deviceIP          = configIni->value("System/deviceIP").toString();
@@ -121,14 +121,14 @@ void MainWindow::initParameter()
 
 
     if(configIni->contains("System/repeatNumber"))
-        repeatNumber = configIni->value("System/repeatNumber").toInt();
+        ui->lineEdit_repeatNumber->setText(configIni->value("System/repeatNumber").toString());
     else
-        QMessageBox::warning(this, "warning", "repeatNumber使用默认值：5");
+        QMessageBox::warning(this, "warning", "请配置System/repeatNumber");
 
     if(configIni->contains("System/blockDataWaitTime"))
-        blockDataWaitTime = configIni->value("System/blockDataWaitTime").toInt();
+        ui->lineEdit_blockDataWaitTime->setText(configIni->value("System/blockDataWaitTime").toString());
     else
-        QMessageBox::warning(this, "warning", "blockDataWaitTime使用默认值：20ms");
+        QMessageBox::warning(this, "warning", "请配置SystemblockDataWaitTime");
 }
 
 //configIni->setValue("Laser/freq", 1111);
@@ -341,7 +341,8 @@ void MainWindow::initSignalSlot()
         QFile file(filePath);
         file.open(QIODevice::ReadOnly);
 
-        char * buffer        = new char[sendFile.blockSize];
+        qint32  blockSize = ui->lineEdit_blockSize->text().toUInt();
+        char * buffer        = new char[blockSize];
         qint32 normal_offset = 0;
 
         // 校验字段总共36*3=108Byte
@@ -369,7 +370,7 @@ void MainWindow::initSignalSlot()
 
         auto sendBlockData = [&](qint64 offset, qint32 block_number) -> qint64 {
             file.seek(offset);
-            qint64 len = file.read(buffer, sendFile.blockSize);
+            qint64 len = file.read(buffer, blockSize);
 
             QByteArray send_data{QByteArray::fromRawData(buffer, len)};
             send_data.append(generateChecksum(buffer, len, block_number));
@@ -397,13 +398,13 @@ void MainWindow::initSignalSlot()
             if(request.isEmpty() == false)  // 发送接收机重新请求数据
             {
                 QThread::msleep(100);  // 解决tcp粘包问题
-                qint64 request_offset = request.dequeue() * sendFile.blockSize;
-                sendBlockData(request_offset, request_offset / sendFile.blockSize);
+                qint64 request_offset = request.dequeue() * blockSize;
+                sendBlockData(request_offset, request_offset / blockSize);
                 QThread::msleep(100);
             }
 
             // 发送
-            qint32 send_len = sendBlockData(normal_offset, normal_offset / sendFile.blockSize);
+            qint32 send_len = sendBlockData(normal_offset, normal_offset / blockSize);
             qDebug("send %d Bytes", send_len);
             sendFile.timer->start();
 
@@ -430,7 +431,7 @@ void MainWindow::initSignalSlot()
                 sendFile.reSendCnt++;
             }
 
-            if(sendFile.reSendCnt >= repeatNumber)
+            if(sendFile.reSendCnt >=  ui->lineEdit_repeatNumber->text().toInt(nullptr, 10))
             {
                 normal_offset += send_len;
                 sendFile.reSendCnt = 0;

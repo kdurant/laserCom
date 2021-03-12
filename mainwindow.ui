@@ -213,7 +213,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="send">
        <attribute name="title">
@@ -229,7 +229,7 @@
            <item row="2" column="0">
             <widget class="QLabel" name="label_8">
              <property name="text">
-              <string>分割数据块大小：</string>
+              <string>分割数据块大小(Byte)：</string>
              </property>
             </widget>
            </item>
@@ -292,14 +292,14 @@
            <item row="1" column="0">
             <widget class="QLabel" name="label_4">
              <property name="text">
-              <string>文件前缀个数</string>
+              <string>文件前缀个数(714Byte)：</string>
              </property>
             </widget>
            </item>
            <item row="3" column="0">
             <widget class="QLabel" name="label_9">
              <property name="text">
-              <string>数据块错误重复次数</string>
+              <string>数据块错误重复次数：</string>
              </property>
             </widget>
            </item>
@@ -468,12 +468,12 @@
         <item row="1" column="0">
          <widget class="QLabel" name="label_10">
           <property name="text">
-           <string>接受文件超时时间：</string>
+           <string>接受文件超时时间（s)：</string>
           </property>
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QLineEdit" name="lineEdit_saveBlockTimeout">
+         <widget class="QLineEdit" name="lineEdit_blockDataWaitTime">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -485,7 +485,7 @@
         <item row="2" column="0">
          <widget class="QLabel" name="label_11">
           <property name="text">
-           <string>接受数据块超时时间：</string>
+           <string>接受数据块超时时间(ms)：</string>
           </property>
          </widget>
         </item>

@@ -17,14 +17,24 @@ MainWindow::MainWindow(QWidget *parent) :
 
     configIni = new QSettings("./config.ini", QSettings::IniFormat);
 
+
+    sendFile.isRecvResponse = false;
+    sendFile.responseStatus = false;
+    sendFile.reSendCnt      = 0;
+    sendFile.isTimeOut      = false;
+    sendFile.timer          = new QTimer();
+    sendFile.prefixLen      = 714;
+    sendFile.blockSize      = 8192;
+    sendFile.timer->setInterval(1000);
+
     initParameter();
     initUI();
     initSignalSlot();
     userStatusBar();
 
+
     recvFile.isRunning   = false;
     recvFile.size        = 0;
-    recvFile.isRecvBlock = false;
     recvFile.blockTimer  = new QTimer();
     recvFile.blockTimer->setInterval(blockDataWaitTime);
     recvFile.fileStopTimer = new QTimer();
@@ -48,11 +58,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
         if(expected_md5 == recv_md5)
         {
-            qDebug() << "---------------: receve data with correct md5";
-            tcpClient->write(QByteArray(238, 'y'));
-            recvFile.handle.write(validData);
-
-            recvFile.size += validData.size();
+            if(lastMd5 == recv_md5)   // 发送端没有收到响应信号，重新发送的数据帧
+                qDebug() << "receve correct frame, but had write it to file.";
+            else
+            {
+                qDebug() << "---------------: receve data with correct md5";
+                tcpClient->write(QByteArray(238, 'y'));
+                recvFile.handle.write(validData);
+                recvFile.size += validData.size();
+                lastMd5 = recv_md5;
+            }
         }
         else
         {
@@ -63,14 +78,6 @@ MainWindow::MainWindow(QWidget *parent) :
         recvFile.blockTimer->stop();
     });
 
-    sendFile.isRecvResponse = false;
-    sendFile.responseStatus = false;
-    sendFile.reSendCnt      = 0;
-    sendFile.isTimeOut      = false;
-    sendFile.timer          = new QTimer();
-    sendFile.prefixLen      = 714;
-    sendFile.blockSize      = 8192;
-    sendFile.timer->setInterval(1000);
 
     ui->label_changeLog->setText(CHANGELOG);
 }
@@ -211,14 +218,10 @@ void MainWindow::initSignalSlot()
         }
         else if(opStatus == OpStatus::RECV_FILE)
         {
-            recvFile.isRecvBlock = true;
-            if(recvFile.isRecvBlock)
-            {
-                recvFile.blockTimer->start();
-            }
+            recvFile.blockTimer->start();
             recvFile.blockData.append(buffer);
 
-            recvFile.fileStopTimer->setInterval(ui->lineEdit_saveTimeout->text().toInt() * 1000);
+            recvFile.fileStopTimer->start();
         }
         else
         {

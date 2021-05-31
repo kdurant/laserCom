@@ -30,16 +30,10 @@ HEADERS += \
 INCLUDEPATH += ./src/at/
 INCLUDEPATH += ./src/transferFile/
 
-GIT_HASH = $$system(git --git-dir $$PWD/.git log -1 --pretty=format:%h)
-DEFINES += GIT_HASH=\\\"$$GIT_HASH\\\"
-
-GIT_DATE = $$system(git --git-dir $$PWD/.git --work-tree $$PWD log -1 --format=%cs )
-DEFINES += GIT_DATE=\\\"$$GIT_DATE\\\"
-
 VERSION = 0.06
 DEFINES += SOFT_VERSION=\"\\\"$$VERSION\\\"\"
 
-TARGET = laserCom$$VERSION"_"$$GIT_DATE"_"$$GIT_HASH
+TARGET = laserCom$$VERSION
 
 FORMS += \
     mainwindow.ui

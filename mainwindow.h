@@ -92,10 +92,10 @@ private:
     struct RecvFile recvFile;
     OpStatus        opStatus;
 
-    qint32 frameNumberOfTest{6};
-    qint32 recvByteCnt;
-    qint32 repeatNumber{5};
-    qint32 blockDataWaitTime{10};
+    qint32     frameNumberOfTest{6};
+    qint32     recvByteCnt;
+    qint32     repeatNumber{5};
+    qint32     blockDataWaitTime{10};
     QByteArray lastMd5{16, 0x00};
 
     struct SendFile sendFile;

@@ -19,13 +19,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    src/at/at.cpp \
-    src/transferFile/TransferBlock.cpp
+    src/at/at.cpp
 
 HEADERS += \
     mainwindow.h \
     src/at/at.h \
-    src/transferFile/TransferBlock.h
+    src/common.h
 
 INCLUDEPATH += ./src/at/
 INCLUDEPATH += ./src/transferFile/

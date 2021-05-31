@@ -41,17 +41,13 @@ public:
     {
         return data.mid(FrameField::COMMAND_POS, FrameField::COMMAND_LEN).toHex().toUInt(nullptr, 16);
     }
-    static int getPckNum(QByteArray &data)
-    {
-        return data.mid(FrameField::PCK_NUM_POS, FrameField::PCK_NUM_LEN).toHex().toInt(nullptr, 16);
-    }
-    static int getDataLen(QByteArray &data)
-    {
-        return data.mid(FrameField::VALID_DATA_LEN_POS, FrameField::VALID_DATA_LEN_LEN).toHex().toInt(nullptr, 16);
-    }
 
+    static uint32_t getDataLen(QByteArray &data)
+    {
+        return data.mid(FrameField::COMMAND_POS, FrameField::COMMAND_LEN).toHex().toUInt(nullptr, 16);
+    }
 public slots:
-    void encode(qint32 command, qint32 data_len, QByteArray &data);
+    void encode(qint32 command, QByteArray &data);
 
 signals:
     /**

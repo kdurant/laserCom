@@ -1,29 +1,38 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
-
+#include <QtCore>
 /*
 
  */
 
-class MasterSet
+class UserProtocol
 {
 public:
-    enum master
+    enum MasterSet
     {
         SET_FILE_INFO = 0x20,
         SET_FILE_DATA = 0x30,
-    }
-};
+    };
 
-class SlaveUp
-{
-public:
-    enum slave
+    enum SlaveUp
     {
         HEART_BEAT         = 0x10,
         RESPONSE_FILE_INFO = 0x21,
         RESPONSE_FILE_DATA = 0x31,
     };
+
+    enum DevAddr
+    {
+        MASTER_DEV = 0xa0,
+        SLAVE_DEV  = 0x50,
+    };
+
+    enum misc
+    {
+        SEP_CHAR = '?',
+    };
+    QString FrameHead = "0123456789abcdef";
+    QString FrameTail = "1032547698badcfe";
 };
 
 #endif

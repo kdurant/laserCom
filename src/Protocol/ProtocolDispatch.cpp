@@ -14,74 +14,67 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
     QByteArray transmitFrame;
     switch(command)
     {
-        case SlaveUp::HEART_BEAT:
+        case UserProtocol::SlaveUp::HEART_BEAT:
             transmitFrame = data.mid(FrameField::DATA_POS + 2, data_len);
             transmitFrame = transmitFrame.mid(5, 4);
-            emit heartBeatReady(transmitFrame);
+            // emit heartBeatReady(transmitFrame);
             break;
-        case SlaveUp::RESPONSE_FILE_INFO:
-
-        case SlaveUp::COMMAND_CNT:
-            break;
-        case SlaveUp::PREVIEW_DATA:
-            emit onlineDataReady(data);
-            break;
-        case SlaveUp::GPS_PENETRATE:
-            transmitFrame = data.mid(24, data_len);
-            emit gpsDataReady(transmitFrame);
-            break;
-        case SlaveUp::LASER_PENETRATE:
-            transmitFrame = data.mid(24, data_len);
-            emit laserDataReady(transmitFrame);
-            break;
-        case SlaveUp::MOTOR_PENETRATE:
-            transmitFrame = data.mid(24, data_len);
-            emit motorDataReady(transmitFrame);
-            break;
-        case SlaveUp::ATTITUDE_PENETRATE:
-            transmitFrame = data.mid(24, data_len);
-            emit attitudeDataReady(transmitFrame);
+        case UserProtocol::SlaveUp::RESPONSE_FILE_INFO:
             break;
 
-        case SlaveUp::FLASH_DATA:
-            emit flashDataReady(data);
-            break;
-
-        case SlaveUp::RESPONSE_SSD_UNIT:
-            emit ssdDataReady(data);
-            break;
-        case SlaveUp::AD_RETURN_DATA:
-            emit ADDataReady(data);
-            break;
-        case SlaveUp::DA_RETURN_DATA:
-            emit DADataReady(data);
-            break;
         default:
             QString error = "Undefined command received!";
-            emit    errorDataReady(error);
+            //emit    errorDataReady(error);
             break;
     }
 }
 
-void ProtocolDispatch::encode(qint32 command, qint32 data_len, QByteArray &data)
+void ProtocolDispatch::encode(qint32 command, QByteArray &data)
 {
     QByteArray frame;
-    uint32_t   checksum = 0xeeeeffff;
-    frame.append(QByteArray::fromHex("AA555AA5AA555AA5"));  // 帧头
-    frame.append(
-        QByteArray::fromHex(QByteArray::number(cmdNum++, 16).rightJustified(8, '0')));  // 指令序号
-    frame.append(
-        QByteArray::fromHex(QByteArray::number(command, 16).rightJustified(8, '0')));  // 命令
-    frame.append(QByteArray::fromHex(
-        QByteArray::number(packetNum, 16).rightJustified(8, '0')));  // 包序号，一般为0
-    frame.append(QByteArray::fromHex(
-        QByteArray::number(data_len, 16).rightJustified(8, '0')));  // 有效数据长度
-    frame.append(data);                                             // 数据，总是256
-    if(data_len <= 256)
-        frame.append(256 - data_len, 0);
-    else
-        QMessageBox::warning(nullptr, "警告", "需要打包的数据过长");
-    frame.append(
-        QByteArray::fromHex(QByteArray::number(checksum, 16).rightJustified(8, '0')));  // 校验
+    quint8     frameHead[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
+    frame.append((char *)frameHead, 8);
+    switch(command)
+    {
+        case UserProtocol::HEART_BEAT:
+            frame.append(UserProtocol::SLAVE_DEV);
+            frame.append(UserProtocol::MASTER_DEV);
+            frame.append(UserProtocol::HEART_BEAT);
+            frame.append(data);
+            break;
+
+        case UserProtocol::SET_FILE_INFO:
+            frame.append(UserProtocol::MASTER_DEV);
+            frame.append(UserProtocol::SLAVE_DEV);
+            frame.append(UserProtocol::SET_FILE_INFO);
+            frame.append(data);
+            break;
+        case UserProtocol::RESPONSE_FILE_INFO:
+            frame.append(UserProtocol::SLAVE_DEV);
+            frame.append(UserProtocol::MASTER_DEV);
+            frame.append(UserProtocol::RESPONSE_FILE_INFO);
+            frame.append(data);
+            break;
+
+        case UserProtocol::SET_FILE_DATA:
+            frame.append(UserProtocol::MASTER_DEV);
+            frame.append(UserProtocol::SLAVE_DEV);
+            frame.append(UserProtocol::SET_FILE_DATA);
+            frame.append(data);
+            break;
+        case UserProtocol::RESPONSE_FILE_DATA:
+            frame.append(UserProtocol::SLAVE_DEV);
+            frame.append(UserProtocol::MASTER_DEV);
+            frame.append(UserProtocol::RESPONSE_FILE_DATA);
+            frame.append(data);
+            break;
+        default:
+            break;
+    }
+    quint8 frameHead[] = {0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe};
+    frame.append((char *)frameHead, 8);
+
+    QByteArray md5 = QCryptographicHash::hash(frame, QCryptographicHash::Md5);
+    frame.append(md5);
     emit frameDataReady(frame);
 }

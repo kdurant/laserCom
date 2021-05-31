@@ -303,6 +303,16 @@ public:
         quint32 ret = (ba[0] << 24) + (ba[1] << 16) + (ba[2] << 8) + (ba[3] << 0);
         return ret;
     }
+
+    /**
+      QString str = "1234abcd"
+      ---->
+      QByteArray ba : 0x12, 0x34, 0xab, 0xcd
+     */
+    static QString2QByteArray(QString s)
+    {
+        return QByteArray::fromHex(QByteArray::fromStdString(FrameHead.toStdString()))
+    }
 };
 
 #endif  // COMMON_H

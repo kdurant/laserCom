@@ -19,12 +19,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    src/at/at.cpp
+    src/Protocol/ProtocolDispatch.cpp \
+    src/at/at.cpp \
+    src/transferFile/recvFile.cpp \
+    src/transferFile/sendFile.cpp
 
 HEADERS += \
     mainwindow.h \
+    src/Protocol/ProtocolDispatch.h \
+    src/Protocol/protocol.h \
     src/at/at.h \
-    src/common.h
+    src/common.h \
+    src/transferFile/recvFile.h \
+    src/transferFile/sendFile.h
 
 INCLUDEPATH += ./src/at/
 INCLUDEPATH += ./src/transferFile/

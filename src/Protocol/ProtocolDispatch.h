@@ -12,8 +12,8 @@ public:
     {
         COMMAND_POS = 10,
         COMMAND_LEN = 1,
-        DATA_POS    = 12,
-        DATA_LEN    = 2
+        DATA_POS    = 11,
+        DATA_LEN    = 4
     };
 };
 
@@ -44,7 +44,7 @@ public:
 
     static uint32_t getDataLen(QByteArray &data)
     {
-        return data.mid(FrameField::COMMAND_POS, FrameField::COMMAND_LEN).toHex().toUInt(nullptr, 16);
+        return data.mid(FrameField::DATA_POS, FrameField::DATA_LEN).toHex().toUInt(nullptr, 16);
     }
 public slots:
     void encode(qint32 command, QByteArray &data);

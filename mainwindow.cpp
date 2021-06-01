@@ -173,8 +173,9 @@ void MainWindow::initSignalSlot()
                 }
             });
 
-    connect(dispatch, &ProtocolDispatch::heartBeatReady, this, [this]()
+    connect(dispatch, &ProtocolDispatch::heartBeatReady, this, [this](quint32 cnt)
             {
+                ui->label_heartBeatCnt->setText("心跳包序号：" + QString::number(cnt));
                 QImage light_green(":qss/light_green.png");
                 QImage light_gray(":qss/light_gray.png");
                 ui->label_statusLight->setPixmap(QPixmap::fromImage(light_green));
@@ -370,12 +371,15 @@ void MainWindow::timerEvent(QTimerEvent *event)
     QByteArray data;
     if(timer1s == event->timerId())
     {
-        if(opStatus != SEND_FILE && opStatus != RECV_FILE)
+        if(tcpStatus == 0x01)
         {
-            heartBeatCnt++;
-            data.append("Heart:");
-            data.append(Common::int2ba(heartBeatCnt));
-            dispatch->encode(UserProtocol::HEART_BEAT, data);
+            if(opStatus != SEND_FILE && opStatus != RECV_FILE)
+            {
+                heartBeatCnt++;
+                data.append("Heart:");
+                data.append(Common::int2ba(heartBeatCnt));
+                dispatch->encode(UserProtocol::HEART_BEAT, data);
+            }
         }
     }
 }

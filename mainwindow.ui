@@ -199,8 +199,8 @@
          <property name="title">
           <string>链路状态</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_6">
-          <item row="0" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
            <widget class="QLabel" name="label_statusLight">
             <property name="toolTip">
              <string>灰色：无法通信
@@ -211,6 +211,13 @@
             </property>
             <property name="pixmap">
              <pixmap resource="res/res.qrc">:/qss/light_gray.png</pixmap>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_heartBeatCnt">
+            <property name="text">
+             <string>0</string>
             </property>
            </widget>
           </item>

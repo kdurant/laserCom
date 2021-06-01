@@ -270,14 +270,14 @@ public:
         return bitSwapTable[c];
     }
 
-    void sleepWithoutBlock(qint32 interval)
+    static void sleepWithoutBlock(qint32 interval)
     {
         QEventLoop waitLoop;
         QTimer::singleShot(interval, &waitLoop, &QEventLoop::quit);
         waitLoop.exec();
     }
 
-    QByteArray int2ba(int number)
+    static QByteArray int2ba(int number)
     {
         QByteArray abyte0;
         abyte0.resize(4);
@@ -305,13 +305,15 @@ public:
     }
 
     /**
+     * @brief 字符串转换为字节数组
       QString str = "1234abcd"
       ---->
       QByteArray ba : 0x12, 0x34, 0xab, 0xcd
+     * @param s
      */
-    static QString2QByteArray(QString s)
+    static QByteArray QString2QByteArray(QString s)
     {
-        return QByteArray::fromHex(QByteArray::fromStdString(FrameHead.toStdString()))
+        return QByteArray::fromHex(QByteArray::fromStdString(s.toStdString()));
     }
 };
 

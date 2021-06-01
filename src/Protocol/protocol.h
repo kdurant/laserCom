@@ -5,6 +5,8 @@
 
  */
 
+#define FrameHead "0123456789abcdef"
+#define FrameTail "1032547698badcfe"
 class UserProtocol
 {
 public:
@@ -31,8 +33,6 @@ public:
     {
         SEP_CHAR = '?',
     };
-    QString FrameHead = "0123456789abcdef";
-    QString FrameTail = "1032547698badcfe";
 };
 
 #endif

@@ -5,5 +5,8 @@
         <file>rbtn_checked.png</file>
         <file>rbtn_unchecked.png</file>
         <file>communication.ico</file>
+        <file>light_gray.png</file>
+        <file>light_green.png</file>
+        <file>light_red.png</file>
     </qresource>
 </RCC>

@@ -14,6 +14,11 @@
 #include <QCryptographicHash>
 
 #include "at.h"
+#include "common.h"
+#include "protocol.h"
+#include "ProtocolDispatch.h"
+#include "sendFile.h"
+#include "recvFile.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -27,6 +32,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 protected:
     void closeEvent(QCloseEvent *event);
+    void timerEvent(QTimerEvent *event);
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -50,36 +56,12 @@ private:
         RECV_FILE,
     };
 
-    struct RecvFile
-    {
-        QString    name;
-        QFile      handle;
-        QByteArray blockData;
-        bool       isRunning;  // 是否正在接收数据
-        qint32     size;       // 接收到的文件长度
-        bool       isRecvBlock;
-        QTimer *   blockTimer;
-        QTimer *   fileStopTimer;
-    };
-    struct SendFile
-    {
-        bool    isRecvResponse;  // 是否收到响应数据
-        bool    responseStatus;  // 收到接收机的状态
-        bool    isTimeOut;       // 等待接收响应超时
-        bool    sendOk;          // 收到接收机的正确响应，才算发送完成
-        qint32  blockSize;
-        qint32  prefixLen;  // 发送文件前缀长度
-        qint32  requestBlockNumber;
-        qint32  reSendCnt;
-        QTimer *timer;
-    };
-
     Ui::MainWindow *ui;
     QSettings *     configIni;
     QLabel *        statusLabel;
+    qint32          timer1s;
 
     QEventLoop *eventloop;
-    QTimer *    recvFileWaitTimer;
     qint32      tcpPort;
 
     QString     deviceIP{"192.168.1.10"};
@@ -89,12 +71,11 @@ private:
     AT          at;
     bool        testStatus;
 
-    struct RecvFile recvFile;
-    OpStatus        opStatus;
+    ProtocolDispatch *dispatch;
+    RecvFile *        recvFile;
+    quint32           heartBeatCnt{0};
+    quint32           recvByteCnt{0};
 
-    qint32     recvByteCnt;
-    qint32     repeatNumber{5};
-    qint32     blockDataWaitTime{10};
-    QByteArray lastMd5{16, 0x00};
+    OpStatus opStatus;
 };
 #endif  // MAINWINDOW_H

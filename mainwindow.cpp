@@ -10,23 +10,19 @@ MainWindow::MainWindow(QWidget *parent) :
     tcpPort(17),
     tcpClient(new QTcpSocket()),
     tcpStatus(0),
-    testStatus(false),
-    recvByteCnt(0)
+    testStatus(false)
 {
     ui->setupUi(this);
 
-    configIni = new QSettings("./config.ini", QSettings::IniFormat);
+    dispatch = new ProtocolDispatch();
+    recvFile = new RecvFile();
+    timer1s  = startTimer(1000);
+    opStatus = IDLE;
 
     initParameter();
     initUI();
     initSignalSlot();
     userStatusBar();
-
-    connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]()
-            {
-                QString name = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
-                ui->lineEdit_saveFileName->setText(name);
-            });
 
     ui->label_changeLog->setText(CHANGELOG);
 }
@@ -36,17 +32,34 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-// configIni->value("System/oceanPort")
 void MainWindow::initParameter()
 {
-    if(configIni->value("System/mode").toString() == "debug")
+    QFileInfo fileInfo("./config.ini");
+    if(!fileInfo.exists())
+    {
+        configIni = new QSettings("./config.ini", QSettings::IniFormat);
+        configIni->setValue("System/mode", QString("debug_network # release, debug, debug_network"));
+    }
+
+    configIni = new QSettings("./config.ini", QSettings::IniFormat);
+
+    if(configIni->value("System/mode").toString() == "debug_network")
         pcIP = "127.0.0.1";
     else
         pcIP = read_ip_address();
-    ui->lineEdit_pcIP->setText(pcIP);
+
+    if(configIni->value("System/mode").toString() == "debug_network")
+    {
+        ui->lineEdit_pcIP->setText("127.0.0.1");
+        ui->lineEdit_deviceIP->setText("127.0.0.1");
+    }
+    else
+    {
+        ui->lineEdit_pcIP->setText(pcIP);
+        ui->lineEdit_deviceIP->setText(deviceIP);
+    }
 }
 
-//configIni->setValue("Laser/freq", 1111);
 void MainWindow::saveParameter()
 {
     //    configIni->setValue("System/deviceIP", ui->lineEdit_deviceIP->text());
@@ -74,7 +87,7 @@ void MainWindow::initUI()
     ui->comboBox_setup->setToolTip(at.setupCommand[0].hint);
 
     ui->progressBar_sendFile->setValue(0);
-    ui->lineEdit_deviceIP->setText(deviceIP);
+    ui->label_statusLight->show();
 
     connect(ui->comboBox_query, &QComboBox::currentTextChanged, this, [this]()
             {
@@ -116,8 +129,8 @@ void MainWindow::initSignalSlot()
             {
                 QByteArray buffer;
                 buffer = tcpClient->readAll();
-                recvByteCnt += buffer.size();
-                statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
+                dispatch->parserFrame(buffer);
+                //                statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
             });
 
     connect(tcpClient, &QTcpSocket::disconnected, this, [this]()
@@ -160,6 +173,22 @@ void MainWindow::initSignalSlot()
                 }
             });
 
+    connect(dispatch, &ProtocolDispatch::heartBeatReady, this, [this]()
+            {
+                QImage light_green(":qss/light_green.png");
+                QImage light_gray(":qss/light_gray.png");
+                ui->label_statusLight->setPixmap(QPixmap::fromImage(light_green));
+                Common::sleepWithoutBlock(500);
+                ui->label_statusLight->setPixmap(QPixmap::fromImage(light_gray));
+            });
+
+    connect(dispatch, &ProtocolDispatch::fileInfoReady, this, [this](QByteArray &data)
+            { dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data); });
+    connect(dispatch, &ProtocolDispatch::fileBlockReady, recvFile, &RecvFile::setNewData);
+
+    connect(dispatch, &ProtocolDispatch::frameDataReady, this, [this](QByteArray &data)
+            { tcpClient->write(data); });
+
     connect(ui->btn_querySend, &QPushButton::pressed, this, [this]()
             {
                 QString data = "AT+" + ui->comboBox_query->currentText() + "?\r\n";
@@ -199,6 +228,12 @@ void MainWindow::initSignalSlot()
                 if(filePath.size() == 0)
                     return;
                 ui->lineEdit_sendFile->setText(filePath);
+            });
+
+    connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]()
+            {
+                QString name = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
+                ui->lineEdit_saveFileName->setText(name);
             });
 
     connect(ui->btn_sendFile, &QPushButton::pressed, this, [this]()
@@ -328,4 +363,18 @@ QString MainWindow::read_ip_address()
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     saveParameter();
+}
+
+void MainWindow::timerEvent(QTimerEvent *event)
+{
+    QByteArray data;
+    if(timer1s == event->timerId())
+    {
+        if(opStatus != SEND_FILE && opStatus != RECV_FILE)
+        {
+            heartBeatCnt++;
+            data = Common::int2ba(heartBeatCnt);
+            dispatch->encode(UserProtocol::HEART_BEAT, data);
+        }
+    }
 }

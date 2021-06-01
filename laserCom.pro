@@ -33,8 +33,10 @@ HEADERS += \
     src/transferFile/recvFile.h \
     src/transferFile/sendFile.h
 
+INCLUDEPATH += ./src/
 INCLUDEPATH += ./src/at/
 INCLUDEPATH += ./src/transferFile/
+INCLUDEPATH += ./src/Protocol/
 
 VERSION = 0.06
 DEFINES += SOFT_VERSION=\"\\\"$$VERSION\\\"\"

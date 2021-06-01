@@ -54,10 +54,13 @@ signals:
      * @brief 系统状态不转发，直接返回
      * @param data
      */
-    void infoDataReady(QByteArray &data);
     void heartBeatReady(quint32 number);
 
+    void fileInfoReady(QByteArray &data);
+    void fileBlockReady(QByteArray &data);
     void frameDataReady(QByteArray &data);
+
+    void errorDataReady(QString &data);
 
 private:
     QVector<quint8>  head;

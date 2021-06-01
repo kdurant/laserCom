@@ -373,7 +373,8 @@ void MainWindow::timerEvent(QTimerEvent *event)
         if(opStatus != SEND_FILE && opStatus != RECV_FILE)
         {
             heartBeatCnt++;
-            data = Common::int2ba(heartBeatCnt);
+            data.append("Heart:");
+            data.append(Common::int2ba(heartBeatCnt));
             dispatch->encode(UserProtocol::HEART_BEAT, data);
         }
     }

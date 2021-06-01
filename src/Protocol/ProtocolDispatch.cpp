@@ -47,12 +47,16 @@ void ProtocolDispatch::encode(qint32 command, QByteArray &data)
     QByteArray frame;
     quint8     frameHead[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
     frame.append((char *)frameHead, 8);
+
+    QByteArray tmp;
     switch(command)
     {
         case UserProtocol::HEART_BEAT:
-            frame.append(UserProtocol::SLAVE_DEV);
-            frame.append(UserProtocol::MASTER_DEV);
-            frame.append(UserProtocol::HEART_BEAT);
+            frame.append(UserProtocol::SLAVE_DEV);   // source addr
+            frame.append(UserProtocol::MASTER_DEV);  // destination addr
+            frame.append(UserProtocol::HEART_BEAT);  // command
+            tmp = Common::int2ba(data.size());
+            frame.append(tmp);
             frame.append(data);
             break;
 
@@ -84,10 +88,11 @@ void ProtocolDispatch::encode(qint32 command, QByteArray &data)
         default:
             break;
     }
+    QByteArray md5 = QCryptographicHash::hash(frame, QCryptographicHash::Md5);
+    frame.append(md5);
+
     quint8 frameTail[] = {0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe};
     frame.append((char *)frameTail, 8);
 
-    QByteArray md5 = QCryptographicHash::hash(frame, QCryptographicHash::Md5);
-    frame.append(md5);
     emit frameDataReady(frame);
 }

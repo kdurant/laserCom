@@ -15,8 +15,20 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
 {
     QByteArray head = Common::QString2QByteArray(FrameHead);
     QByteArray tail = Common::QString2QByteArray(FrameTail);
+
     if(data.startsWith(head) && data.endsWith(tail))
     {
+        int        len        = data.size();
+        QByteArray validData  = data.mid(0, len - 24);
+        QByteArray recv_md5   = data.mid(len - 24, 16);
+        QByteArray expect_md5 = QCryptographicHash::hash(validData, QCryptographicHash::Md5);
+        if(recv_md5 != expect_md5)
+        {
+            QString error = "Checksum Error!";
+            emit    errorDataReady(error);
+            return;
+        }
+
         uint32_t   command  = getCommand(data);
         uint32_t   data_len = getDataLen(data);
         QByteArray transmitFrame;
@@ -64,12 +76,16 @@ void ProtocolDispatch::encode(qint32 command, QByteArray &data)
             frame.append(UserProtocol::MASTER_DEV);
             frame.append(UserProtocol::SLAVE_DEV);
             frame.append(UserProtocol::SET_FILE_INFO);
+            tmp = Common::int2ba(data.size());
+            frame.append(tmp);
             frame.append(data);
             break;
         case UserProtocol::RESPONSE_FILE_INFO:
             frame.append(UserProtocol::SLAVE_DEV);
             frame.append(UserProtocol::MASTER_DEV);
             frame.append(UserProtocol::RESPONSE_FILE_INFO);
+            tmp = Common::int2ba(data.size());
+            frame.append(tmp);
             frame.append(data);
             break;
 
@@ -77,12 +93,16 @@ void ProtocolDispatch::encode(qint32 command, QByteArray &data)
             frame.append(UserProtocol::MASTER_DEV);
             frame.append(UserProtocol::SLAVE_DEV);
             frame.append(UserProtocol::SET_FILE_DATA);
+            tmp = Common::int2ba(data.size());
+            frame.append(tmp);
             frame.append(data);
             break;
         case UserProtocol::RESPONSE_FILE_DATA:
             frame.append(UserProtocol::SLAVE_DEV);
             frame.append(UserProtocol::MASTER_DEV);
             frame.append(UserProtocol::RESPONSE_FILE_DATA);
+            tmp = Common::int2ba(data.size());
+            frame.append(tmp);
             frame.append(data);
             break;
         default:

@@ -1,12 +1,22 @@
 #-*- coding: UTF-8 -*-
+"""
+TCP server， 模拟接收机功能
+"""
+
 import argparse
 import socket
-import time
+import hashlib
 
 parser = argparse.ArgumentParser(description="simple tcp server program")
 parser.add_argument("--ip", default="127.0.0.1", help="tcp server ip address")
 parser.add_argument("--port", default=17, type=int, help="tcp server port")
 args = parser.parse_args()
+
+FRAME_HEAD = b'\x01\x23\x45\x67\x89\xab\xcd\xef'
+FRAME_TAIL = b'\x10\x32\x54\x76\x98\xba\xdc\xfe'
+m = hashlib.md5()
+SET_FILE_INFO = 0x20
+RESPONSE_FILE_INFO = b'\x21'
 
 server = socket.socket()
 server.bind((args.ip, args.port))
@@ -16,8 +26,19 @@ while True:
     connection, addr = server.accept()
     print('new client addr is : {0}'.format(addr))
 
-    time.sleep(3)
-    for i in range(5):
-        connection.send(b"wangjun123" * 1000)
+    while True:
+        data = connection.recv(1024)
+        if data[10] == SET_FILE_INFO:
 
-    connection.close()
+            needCheckSum = data[:10]
+            needCheckSum += RESPONSE_FILE_INFO
+            needCheckSum += data[11:]
+
+            needCheckSum = needCheckSum[:-24]
+            m.update(needCheckSum)
+            needCheckSum += m.digest()
+            needCheckSum += FRAME_TAIL
+            connection.send(needCheckSum)
+
+
+connection.close()

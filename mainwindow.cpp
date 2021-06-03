@@ -202,6 +202,8 @@ void MainWindow::initSignalSlot()
         tcpClient->write(data);
     });
 
+    connect(dispatch, &ProtocolDispatch::fileInfoReady, sendFile, &SendFile::setNewData);
+
     connect(sendFile, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
 
     connect(ui->btn_querySend, &QPushButton::pressed, this, [this]() {
@@ -248,6 +250,9 @@ void MainWindow::initSignalSlot()
 
     connect(ui->btn_sendFile, &QPushButton::pressed, this, [this]() {
         QString filePath = ui->lineEdit_sendFile->text();
+        if(configIni->value("System/mode").toString() == "debug_network")
+            filePath = "ui_mainwindow.h";
+
         if(filePath.isEmpty())
         {
             QMessageBox::warning(this, "warning", "请先选择文件");

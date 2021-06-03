@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     dispatch = new ProtocolDispatch();
     recvFile = new RecvFile();
+    sendFile = new SendFile();
     timer1s  = startTimer(1000);
     opStatus = IDLE;
 
@@ -42,7 +43,10 @@ void MainWindow::initParameter()
         QFile file("./config.ini");
         file.open(QIODevice::WriteOnly);
         file.write("[System]\n");
-        file.write("mode=debug_network # release, debug, debug_network");
+        file.write("; release, debug, debug_network\n");
+        file.write("mode = debug_network\n");
+        file.write("; 1M= 1048576, 512K = 524288, 256K = 262144, 128K = 131072, 64K = 65536, 32K = 32768\n");
+        file.write("blockSize = 8192\n");
         file.close();
     }
 
@@ -174,6 +178,9 @@ void MainWindow::initSignalSlot()
         }
     });
 
+    /*
+     接收端对信号的处理
+     */
     connect(dispatch, &ProtocolDispatch::heartBeatReady, this, [this](quint32 cnt) {
         ui->label_heartBeatCnt->setText("心跳包序号：" + QString::number(cnt));
         QImage light_green(":qss/light_green.png");
@@ -188,9 +195,14 @@ void MainWindow::initSignalSlot()
     });
     connect(dispatch, &ProtocolDispatch::fileBlockReady, recvFile, &RecvFile::setNewData);
 
+    /*
+     发送端对信号的处理
+     */
     connect(dispatch, &ProtocolDispatch::frameDataReady, this, [this](QByteArray &data) {
         tcpClient->write(data);
     });
+
+    connect(sendFile, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
 
     connect(ui->btn_querySend, &QPushButton::pressed, this, [this]() {
         QString data = "AT+" + ui->comboBox_query->currentText() + "?\r\n";
@@ -250,29 +262,16 @@ void MainWindow::initSignalSlot()
 
         ui->progressBar_sendFile->setMaximum(QFile(filePath).size());
         ui->progressBar_sendFile->setValue(0);
+        sendFile->setFileName(filePath);
 
-        // 校验字段总共36*3=108Byte
-        auto generateChecksum = [](char *data, qint32 len, qint32 number) -> QByteArray {
-            auto intToByte = [](int number) -> QByteArray {
-                QByteArray abyte0;
-                abyte0.resize(4);
-                abyte0[0] = (uchar)(0x000000ff & number);
-                abyte0[1] = (uchar)((0x0000ff00 & number) >> 8);
-                abyte0[2] = (uchar)((0x00ff0000 & number) >> 16);
-                abyte0[3] = (uchar)((0xff000000 & number) >> 24);
-                return abyte0;
-            };
-
-            QByteArray res;
-            res.append(16, 0xfe);
-            res.append(intToByte(number));
-
-            QByteArray send_data{QByteArray::fromRawData(data, len)};
-            QByteArray tmp = res.append(QCryptographicHash::hash(send_data, QCryptographicHash::Md5));
-            res.append(tmp);
-            res.append(tmp);
-            return res;
-        };
+        quint8 sendCnt = 0;
+        while(sendCnt < 3)
+        {
+            if(sendFile->sendFileInfo())
+                break;
+            else
+                sendCnt++;
+        }
     });
 
     connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
@@ -363,15 +362,15 @@ void MainWindow::timerEvent(QTimerEvent *event)
     QByteArray data;
     if(timer1s == event->timerId())
     {
-        if(tcpStatus == 0x01)
-        {
-            if(opStatus != SEND_FILE && opStatus != RECV_FILE)
-            {
-                heartBeatCnt++;
-                data.append("Heart:");
-                data.append(Common::int2ba(heartBeatCnt));
-                dispatch->encode(UserProtocol::HEART_BEAT, data);
-            }
-        }
+        //        if(tcpStatus == 0x01)
+        //        {
+        //            if(opStatus != SEND_FILE && opStatus != RECV_FILE)
+        //            {
+        //                heartBeatCnt++;
+        //                data.append("Heart:");
+        //                data.append(Common::int2ba(heartBeatCnt));
+        //                dispatch->encode(UserProtocol::HEART_BEAT, data);
+        //            }
+        //        }
     }
 }

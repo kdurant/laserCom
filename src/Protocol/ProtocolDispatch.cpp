@@ -7,7 +7,7 @@ quint32 ProtocolDispatch::cmdNum = 0;
  * @brief 根据协议预定好的命令，将收到的信息，发送给指定的模块处理
  * 简单的响应
  * 有两种情况：
- * 一、接收指令时，采用同步阻塞方式，TCP不会粘包
+ * 一、接收指令时，采用同步阻塞方式，TCP不会粘包. 将数据段内容  发送给指定的模块处理
  * 二、接收文件数据时，TCP肯定会粘包，如何将文件块分开，分别处理？
  * @param data
  */
@@ -40,7 +40,8 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
                 emit heartBeatReady(Common::ba2int(transmitFrame));
                 break;
             case UserProtocol::SlaveUp::RESPONSE_FILE_INFO:
-                emit fileInfoReady(data);
+                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+                emit fileInfoReady(transmitFrame);
                 break;
             default:
                 QString error = "Undefined command received!";

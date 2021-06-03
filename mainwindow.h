@@ -73,6 +73,7 @@ private:
 
     ProtocolDispatch *dispatch;
     RecvFile *        recvFile;
+    SendFile *        sendFile;
     quint32           heartBeatCnt{0};
     quint32           recvByteCnt{0};
 

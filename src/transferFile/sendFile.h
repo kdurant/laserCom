@@ -9,9 +9,10 @@ class SendFile : public QObject
 {
     Q_OBJECT
 private:
-    QString    fileName;
-    quint32    blockSize;
-    QByteArray recvData;
+    QString       fileName;
+    quint32       blockSize;
+    QByteArray    recvData;
+    QVector<bool> fileBlockStatus;
 
 public:
     SendFile() :
@@ -30,8 +31,20 @@ public:
         blockSize = size;
     }
 
+    /**
+     * @brief sendFileInfo, 从接收机发送0x20命令
+     * @return
+     */
     bool sendFileInfo(void);
-    void splitData(QVector<QByteArray> &allFileBlock);
+
+    /**
+     * @brief splitData, 将文件分割成指定大小的页，并按照格式打包
+     * @param allFileBlock
+     * @return 文件被分割的页数
+     */
+    int splitData(QVector<QByteArray> &allFileBlock);
+
+    bool sendFileBlock(QByteArray &fileBlock);
 
     bool send(void);
 

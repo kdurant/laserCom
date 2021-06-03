@@ -69,13 +69,15 @@ private:
     QTcpSocket *tcpClient;
     qint32      tcpStatus;
     AT          at;
-    bool        testStatus;
+    bool        testStatus{false};
 
     ProtocolDispatch *dispatch;
     RecvFile *        recvFile;
     SendFile *        sendFile;
     quint32           heartBeatCnt{0};
     quint32           recvByteCnt{0};
+
+    QVector<bool> sendFileBlockStatus{false};
 
     OpStatus opStatus;
 };

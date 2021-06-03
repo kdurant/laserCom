@@ -44,7 +44,8 @@ void MainWindow::initParameter()
         file.open(QIODevice::WriteOnly);
         file.write("[System]\n");
         file.write("; release, debug, debug_network\n");
-        file.write("mode = debug_network\n");
+        file.write("mode = debug_network\n\n");
+        file.write("[SendFile]\n");
         file.write("; 1M= 1048576, 512K = 524288, 256K = 262144, 128K = 131072, 64K = 65536, 32K = 32768\n");
         file.write("blockSize = 8192\n");
         file.close();
@@ -135,6 +136,8 @@ void MainWindow::initSignalSlot()
         QByteArray buffer;
         buffer = tcpClient->readAll();
         dispatch->parserFrame(buffer);
+
+        testStatus = true;
         //                statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
     });
 
@@ -269,6 +272,7 @@ void MainWindow::initSignalSlot()
         ui->progressBar_sendFile->setValue(0);
         sendFile->setFileName(filePath);
 
+        // 1. 发送文件信息
         quint8 sendCnt = 0;
         while(sendCnt < 3)
         {
@@ -277,6 +281,36 @@ void MainWindow::initSignalSlot()
             else
                 sendCnt++;
         }
+        if(sendCnt == 3)
+        {
+            ui->statusbar->showMessage("SET_FILE_INFO失败，请重新发送文件");
+            //            return;
+        }
+        sendFile->setFileBlockSize(configIni->value("SendFile/blockSize").toUInt());
+        QVector<QByteArray> allFileBlock;
+        int                 fileBlockNumber = sendFile->splitData(allFileBlock);
+        for(int i = 0; i < fileBlockNumber; i++)
+            sendFileBlockStatus.append(false);
+        int succussCnt = 0;
+
+        while(1)
+        {
+            qDebug() << testStatus;
+            Common::sleepWithoutBlock(1000);
+        }
+        //        while(succussCnt < fileBlockNumber)
+        //        {
+        //            for(int i = 0; i < sendFileBlockStatus.size(); i++)
+        //            {
+        //                if(sendFileBlockStatus[i] == false)
+        //                {
+        //                    dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+        //                }
+        //                else
+        //                {
+        //                }
+        //            }
+        //        }
     });
 
     connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {

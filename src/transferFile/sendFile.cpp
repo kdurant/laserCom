@@ -35,12 +35,12 @@ bool SendFile::sendFileInfo(void)
  * 3.当前传输文件块有效字节数（4Byte）
  * 4.文件块具体内容
  */
-void SendFile::splitData(QVector<QByteArray>& allFileBlock)
+int SendFile::splitData(QVector<QByteArray>& allFileBlock)
 {
     QByteArray data;
     QFile      file(fileName);
     if(!file.exists())
-        return;
+        return 0;
     file.open(QIODevice::ReadOnly);
 
     quint32    fileSize        = file.size();
@@ -64,6 +64,7 @@ void SendFile::splitData(QVector<QByteArray>& allFileBlock)
         allFileBlock.append(frame);
         curretFileBlock++;
     }
+    return fileBlockNumber;
 }
 
 bool SendFile::send(void)

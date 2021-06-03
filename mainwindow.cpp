@@ -4,7 +4,9 @@
 #include <QElapsedTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent), ui(new Ui::MainWindow), statusLabel(new QLabel()),
+    QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    statusLabel(new QLabel()),
     //    softwareVer("0.05"),
     eventloop(new QEventLoop()),
     tcpPort(17),
@@ -37,8 +39,11 @@ void MainWindow::initParameter()
     QFileInfo fileInfo("./config.ini");
     if(!fileInfo.exists())
     {
-        configIni = new QSettings("./config.ini", QSettings::IniFormat);
-        configIni->setValue("System/mode", QString("debug_network # release, debug, debug_network"));
+        QFile file("./config.ini");
+        file.open(QIODevice::WriteOnly);
+        file.write("[System]\n");
+        file.write("mode=debug_network # release, debug, debug_network");
+        file.close();
     }
 
     configIni = new QSettings("./config.ini", QSettings::IniFormat);
@@ -129,7 +134,9 @@ void MainWindow::initSignalSlot()
         //                statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
     });
 
-    connect(tcpClient, &QTcpSocket::disconnected, this, [this]() { ui->rbt_connect->setChecked(false); });
+    connect(tcpClient, &QTcpSocket::disconnected, this, [this]() {
+        ui->rbt_connect->setChecked(false);
+    });
     connect(ui->rbt_connect, &QRadioButton::toggled, this, [this]() {
         if(ui->rbt_connect->isChecked() == true)
         {
@@ -176,10 +183,14 @@ void MainWindow::initSignalSlot()
         ui->label_statusLight->setPixmap(QPixmap::fromImage(light_gray));
     });
 
-    connect(dispatch, &ProtocolDispatch::fileInfoReady, this, [this](QByteArray &data) { dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data); });
+    connect(dispatch, &ProtocolDispatch::fileInfoReady, this, [this](QByteArray &data) {
+        dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
+    });
     connect(dispatch, &ProtocolDispatch::fileBlockReady, recvFile, &RecvFile::setNewData);
 
-    connect(dispatch, &ProtocolDispatch::frameDataReady, this, [this](QByteArray &data) { tcpClient->write(data); });
+    connect(dispatch, &ProtocolDispatch::frameDataReady, this, [this](QByteArray &data) {
+        tcpClient->write(data);
+    });
 
     connect(ui->btn_querySend, &QPushButton::pressed, this, [this]() {
         QString data = "AT+" + ui->comboBox_query->currentText() + "?\r\n";
@@ -264,7 +275,9 @@ void MainWindow::initSignalSlot()
         };
     });
 
-    connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() { testStatus = false; });
+    connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
+        testStatus = false;
+    });
 
     connect(ui->btn_sendTest, &QPushButton::pressed, this, [this]() {
         if(tcpStatus == 0x00)

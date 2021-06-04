@@ -182,7 +182,7 @@ void MainWindow::initSignalSlot()
     });
 
     /*
-     接收端对信号的处理
+     接收端对协议的处理
      */
     connect(dispatch, &ProtocolDispatch::heartBeatReady, this, [this](quint32 cnt) {
         ui->label_heartBeatCnt->setText("心跳包序号：" + QString::number(cnt));
@@ -193,10 +193,15 @@ void MainWindow::initSignalSlot()
         ui->label_statusLight->setPixmap(QPixmap::fromImage(light_gray));
     });
 
-    connect(dispatch, &ProtocolDispatch::fileInfoReady, this, [this](QByteArray &data) {
+    // 收到正确的文件信息，立刻响应发送端
+    // 1. 从机收到主机发送的信号（0x20）
+    // 2. 主机同样会接收到相似的信号(0x21)
+    // 但处理方法不一样，所以信号名要加以区分
+    connect(dispatch, &ProtocolDispatch::slaveFileInfoReady, this, [this](QByteArray &data) {
         dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
     });
-    connect(dispatch, &ProtocolDispatch::fileBlockReady, recvFile, &RecvFile::setNewData);
+    // 收到文件块数据，发送接收文件模块处理
+    connect(dispatch, &ProtocolDispatch::fileBlockReady, recvFile, &RecvFile::paserFileBlock);
 
     /*
      发送端对信号的处理
@@ -205,7 +210,7 @@ void MainWindow::initSignalSlot()
         tcpClient->write(data);
     });
 
-    connect(dispatch, &ProtocolDispatch::fileInfoReady, sendFile, &SendFile::setNewData);
+    connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFile, &SendFile::setNewData);
 
     connect(sendFile, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
 
@@ -286,9 +291,12 @@ void MainWindow::initSignalSlot()
             ui->statusbar->showMessage("SET_FILE_INFO失败，请重新发送文件");
             //            return;
         }
+        // 2. 分割文件
         sendFile->setFileBlockSize(configIni->value("SendFile/blockSize").toUInt());
         QVector<QByteArray> allFileBlock;
         int                 fileBlockNumber = sendFile->splitData(allFileBlock);
+
+        //3. 初始化 页 发送状态
         for(int i = 0; i < fileBlockNumber; i++)
             sendFileBlockStatus.append(false);
         int succussCnt = 0;

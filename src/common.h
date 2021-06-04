@@ -305,7 +305,7 @@ public:
     }
 
     /**
-     * @brief 字符串转换为字节数组
+     * @brief 字符串转换为字节数组, 字符串必须为16进制可用字符
       QString str = "1234abcd"
       ---->
       QByteArray ba : 0x12, 0x34, 0xab, 0xcd

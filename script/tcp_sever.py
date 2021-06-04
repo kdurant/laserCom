@@ -1,11 +1,14 @@
 #-*- coding: UTF-8 -*-
 """
 TCP server， 模拟接收机功能
+实现：
+1. 对0x20命令的响应
 """
 
 import argparse
 import socket
 import hashlib
+from .protocol import Protocol
 
 parser = argparse.ArgumentParser(description="simple tcp server program")
 parser.add_argument("--ip", default="127.0.0.1", help="tcp server ip address")
@@ -21,6 +24,9 @@ RESPONSE_FILE_INFO = b'\x21'
 server = socket.socket()
 server.bind((args.ip, args.port))
 server.listen(5)
+
+protocol = Protocol()
+
 while True:
     print("wait for new tcp client to connect...")
     connection, addr = server.accept()
@@ -39,6 +45,5 @@ while True:
             needCheckSum += m.digest()
             needCheckSum += FRAME_TAIL
             connection.send(needCheckSum)
-
 
 connection.close()

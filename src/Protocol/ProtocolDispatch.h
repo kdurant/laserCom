@@ -10,10 +10,16 @@ class FrameField
 public:
     enum fieldOffset
     {
+        MASTER_ADDR_POS = 8,
+        MASTER_ADDR_LEN = 1,
+        SLAVE_ADDR_POS  = 9,
+        SLAVE_ADDR_LEN  = 1,
+
         COMMAND_POS = 10,
         COMMAND_LEN = 1,
-        DATA_POS    = 11,
-        DATA_LEN    = 4
+
+        DATA_POS = 11,
+        DATA_LEN = 4
     };
 };
 
@@ -42,6 +48,15 @@ public:
         return data.mid(FrameField::COMMAND_POS, FrameField::COMMAND_LEN).toHex().toUInt(nullptr, 16);
     }
 
+    static uint8_t getMasterAddr(QByteArray &data)
+    {
+        return data.mid(FrameField::MASTER_ADDR_POS, FrameField::MASTER_ADDR_LEN).toHex().toUInt(nullptr, 16);
+    }
+    static uint8_t getSlaveAddr(QByteArray &data)
+    {
+        return data.mid(FrameField::SLAVE_ADDR_POS, FrameField::SLAVE_ADDR_LEN).toHex().toUInt(nullptr, 16);
+    }
+
     static uint32_t getDataLen(QByteArray &data)
     {
         return data.mid(FrameField::DATA_POS, FrameField::DATA_LEN).toHex().toUInt(nullptr, 16);
@@ -56,7 +71,8 @@ signals:
      */
     void heartBeatReady(quint32 number);
 
-    void fileInfoReady(QByteArray &data);
+    void slaveFileInfoReady(QByteArray &data);
+    void masterFileInfoReady(QByteArray &data);
     void fileBlockReady(QByteArray &data);
     void frameDataReady(QByteArray &data);
 

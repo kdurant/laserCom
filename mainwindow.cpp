@@ -301,11 +301,11 @@ void MainWindow::initSignalSlot()
             sendFileBlockStatus.append(false);
         int succussCnt = 0;
 
-        while(1)
-        {
-            qDebug() << testStatus;
-            Common::sleepWithoutBlock(1000);
-        }
+        //        while(1)
+        //        {
+        //            qDebug() << testStatus;
+        //            Common::sleepWithoutBlock(1000);
+        //        }
         //        while(succussCnt < fileBlockNumber)
         //        {
         //            for(int i = 0; i < sendFileBlockStatus.size(); i++)

@@ -17,6 +17,8 @@ GRTAGS
 GTAGS*
 bin
 .idea
+*.pyc
+_pycache__
 
 ##################qt###################
 Debug 

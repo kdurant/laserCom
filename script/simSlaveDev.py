@@ -8,7 +8,7 @@ TCP server， 模拟接收机功能
 import argparse
 import socket
 import hashlib
-from .protocol import Protocol
+from protocol import Protocol
 
 parser = argparse.ArgumentParser(description="simple tcp server program")
 parser.add_argument("--ip", default="127.0.0.1", help="tcp server ip address")
@@ -34,16 +34,20 @@ while True:
 
     while True:
         data = connection.recv(1024)
-        if data[10] == SET_FILE_INFO:
 
-            needCheckSum = data[:10]
-            needCheckSum += RESPONSE_FILE_INFO
-            needCheckSum += data[11:]
+        response = protocol.paserData(data)
+        connection.send(response)
 
-            needCheckSum = needCheckSum[:-24]
-            m.update(needCheckSum)
-            needCheckSum += m.digest()
-            needCheckSum += FRAME_TAIL
-            connection.send(needCheckSum)
+        # if data[10] == SET_FILE_INFO:
+        #
+        #     needCheckSum = data[:10]
+        #     needCheckSum += RESPONSE_FILE_INFO
+        #     needCheckSum += data[11:]
+        #
+        #     needCheckSum = needCheckSum[:-24]
+        #     m.update(needCheckSum)
+        #     needCheckSum += m.digest()
+        #     needCheckSum += FRAME_TAIL
+        #     connection.send(needCheckSum)
 
 connection.close()

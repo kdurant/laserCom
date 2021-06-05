@@ -33,7 +33,7 @@ while True:
     print('new client addr is : {0}'.format(addr))
 
     while True:
-        data = connection.recv(1024)
+        data = connection.recv(10240)
 
         response = protocol.paserData(data)
         connection.send(response)

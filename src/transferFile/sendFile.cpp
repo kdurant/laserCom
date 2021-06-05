@@ -55,13 +55,20 @@ int SendFile::splitData(QVector<QByteArray>& allFileBlock)
     while(!file.atEnd())
     {
         frame.append(Common::int2ba(fileBlockNumber));  // 1.文件被划分成文件块的总个数（4Byte）
+        frame.append('?');
+
         frame.append(Common::int2ba(curretFileBlock));  // 2.当前传输的文件块序号，从0开始（4Byte）
+        frame.append('?');
+
         validLen = file.read(buffer, blockSize);
         frame.append(Common::int2ba(validLen));  // 3.当前传输文件块有效字节数（4Byte）
+        frame.append('?');
+
         blockData = QByteArray::fromRawData(buffer, validLen);
         frame.append(blockData);  // 4.文件块具体内容
 
         allFileBlock.append(frame);
+        frame.clear();
         curretFileBlock++;
     }
     return fileBlockNumber;

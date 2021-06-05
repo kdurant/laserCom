@@ -55,6 +55,8 @@ class Protocol(object):
             result += self.md5.digest()
             result += self.PROTOCAL_TAIL
             return result
+        else:
+            return b'hello, world'
 
     def getCommand(self, data):
         command = data[self.COMMAND_POS: self.COMMAND_POS+self.COMMAND_LEN]

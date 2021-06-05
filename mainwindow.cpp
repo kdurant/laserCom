@@ -299,26 +299,21 @@ void MainWindow::initSignalSlot()
         //3. 初始化 页 发送状态
         for(int i = 0; i < fileBlockNumber; i++)
             sendFileBlockStatus.append(false);
-        int succussCnt = 0;
-
-        //        while(1)
-        //        {
-        //            qDebug() << testStatus;
-        //            Common::sleepWithoutBlock(1000);
-        //        }
-        //        while(succussCnt < fileBlockNumber)
-        //        {
-        //            for(int i = 0; i < sendFileBlockStatus.size(); i++)
-        //            {
-        //                if(sendFileBlockStatus[i] == false)
-        //                {
-        //                    dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
-        //                }
-        //                else
-        //                {
-        //                }
-        //            }
-        //        }
+        //        dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[0]);
+        int cycleCnt = 0;
+        do
+        {
+            for(int i = 0; i < fileBlockNumber; i++)
+            {
+                if(sendFileBlockStatus[i] == false)
+                {
+                    dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+                }
+            }
+            cycleCnt++;
+            Common::sleepWithoutBlock(10);  // 等待响应处理，更新sendFileBlockStatus状态
+        }                                   // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
+        while(std::all_of(sendFileBlockStatus.begin(), sendFileBlockStatus.end(), [](int i) { return i == true; }) == false && cycleCnt < 5);
     });
 
     connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {

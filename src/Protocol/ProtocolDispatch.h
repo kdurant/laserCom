@@ -71,9 +71,10 @@ signals:
      */
     void heartBeatReady(quint32 number);
 
-    void slaveFileInfoReady(QByteArray &data);
-    void masterFileInfoReady(QByteArray &data);
-    void fileBlockReady(QByteArray &data);
+    void slaveFileInfoReady(QByteArray &data);    // 从机收到主机设置的文件信息
+    void masterFileInfoReady(QByteArray &data);   // 主机收到从机对文件信息的应答
+    void slaveFileBlockReady(QByteArray &data);   // 从机收到主机设置的文件块数据
+    void masterFileBlockReady(QByteArray &data);  // 主机收到从机对文件数据块的应答
     void frameDataReady(QByteArray &data);
 
     void errorDataReady(QString &data);

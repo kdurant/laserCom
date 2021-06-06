@@ -26,19 +26,17 @@ class Protocol(object):
         self.COMMAND_POS: int = 10
         self.COMMAND_LEN: int = 1
         self.DATA_LEN_POS: int = 11
-        self.DATA_LEN_LEN : int = 4
+        self.DATA_LEN_LEN: int = 4
         self.DATA_POS: int = 15
 
-        self.md5 = hashlib.md5()
-
     def paserData(self, data):
+        #print("receive data length : {0}".format(len(data)))
         result = b''
         result += self.PROTOCAL_HEAD
 
         command = self.getCommand(data)
         if command == self.HEART_BEAT:
             return data
-        
 
         elif command == self.SET_FILE_INFO:
             result += self.SLAVE_DEV.to_bytes(1, byteorder='big')
@@ -51,15 +49,34 @@ class Protocol(object):
             result += dataLen.to_bytes(4, byteorder='big')
             result += dataField
 
-            self.md5.update(result)
-            result += self.md5.digest()
+            md5 = hashlib.md5(result).digest()
+            result += md5
             result += self.PROTOCAL_TAIL
+            return result
+        elif command == self.SET_FILE_DATA:
+            result += self.SLAVE_DEV.to_bytes(1, byteorder='big')
+            result += self.MASTER_DEV.to_bytes(1, byteorder='big')
+            result += self.RESPONSE_FILE_DATA.to_bytes(1, byteorder='big')
+
+            dataLen = self.getDataLen(data)
+            dataField = self.getDataField(data)
+
+            result += dataField[:15]
+            result += b'\x11'
+
+            print("result is : {}".format(result))
+            md5 = hashlib.md5(result).digest()
+
+            print("md5 is : {}".format(md5))
+            result += md5
+            result += self.PROTOCAL_TAIL
+
             return result
         else:
             return b'hello, world'
 
     def getCommand(self, data):
-        command = data[self.COMMAND_POS: self.COMMAND_POS+self.COMMAND_LEN]
+        command = data[self.COMMAND_POS:self.COMMAND_POS + self.COMMAND_LEN]
         s = int.from_bytes(command, byteorder='big')
         return s
 
@@ -71,7 +88,7 @@ class Protocol(object):
         return int.from_bytes(b, byteorder='big')
 
     def getDataField(self, data):
-        len = self. getDataLen(data)
+        len = self.getDataLen(data)
         return data[self.DATA_POS:self.DATA_POS + len]
 
 

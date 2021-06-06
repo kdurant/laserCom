@@ -201,7 +201,7 @@ void MainWindow::initSignalSlot()
         dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
     });
     // 收到文件块数据，发送接收文件模块处理
-    connect(dispatch, &ProtocolDispatch::fileBlockReady, recvFile, &RecvFile::paserFileBlock);
+    connect(dispatch, &ProtocolDispatch::slaveFileBlockReady, recvFile, &RecvFile::paserFileBlock);
 
     /*
      发送端对信号的处理
@@ -211,6 +211,10 @@ void MainWindow::initSignalSlot()
     });
 
     connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFile, &SendFile::setNewData);
+    connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
+        int curretFileBlock                  = Common::ba2int(data.mid(5, 4));
+        sendFileBlockStatus[curretFileBlock] = true;
+    });
 
     connect(sendFile, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
 
@@ -304,6 +308,7 @@ void MainWindow::initSignalSlot()
         do
         {
             for(int i = 0; i < fileBlockNumber; i++)
+            //            for(int i = 0; i < 1; i++)
             {
                 if(sendFileBlockStatus[i] == false)
                 {

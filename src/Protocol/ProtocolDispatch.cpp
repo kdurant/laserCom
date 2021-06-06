@@ -41,10 +41,16 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
                 break;
             case UserProtocol::SlaveUp::RESPONSE_FILE_INFO:
                 transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
-                if(getMasterAddr(data) == UserProtocol::MASTER_DEV)
+
+                if(getMasterAddr(data) == UserProtocol::MASTER_DEV)  // 从机收到主机的信息数据
                     emit slaveFileInfoReady(transmitFrame);
-                else
+                else  // 主机收到从机对文件信息的应答
                     emit masterFileInfoReady(transmitFrame);
+                break;
+
+            case UserProtocol::SlaveUp::RESPONSE_FILE_DATA:
+                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+                emit masterFileBlockReady(transmitFrame);
                 break;
             default:
                 QString error = "Undefined command received!";
@@ -54,7 +60,7 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
     }
     else
     {
-        emit fileBlockReady(data);
+        emit slaveFileBlockReady(data);
     }
 }
 

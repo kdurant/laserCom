@@ -91,5 +91,26 @@ class Protocol(object):
         len = self.getDataLen(data)
         return data[self.DATA_POS:self.DATA_POS + len]
 
+    def encode(self, command):
+        frame = b''
+        frame += self.PROTOCAL_HEAD
+        frame += self.MASTER_DEV.to_bytes(length=1, byteorder='big', signed=False)
+        frame += self.SLAVE_DEV.to_bytes(length=1, byteorder='big', signed=False)
+
+        if command == self.SET_FILE_INFO:
+            frame += command.to_bytes(length=1, byteorder='big', signed=False)
+            fileName = "test.txt"
+            fileSize = 1024
+            length = len(fileName) + 4
+            frame += length.to_bytes(length=4, byteorder='big', signed=False)
+            frame += bytes(fileName, encoding="utf8")
+            frame += bytes('?', encoding="utf8")
+            frame += fileSize.to_bytes(length=4, byteorder='big', signed=False)
+
+        md5 = hashlib.md5(frame).digest()
+        frame += md5
+        frame += self.PROTOCAL_TAIL
+        return frame
+
 
 protocol = Protocol()

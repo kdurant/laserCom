@@ -1,12 +1,12 @@
 #-*- coding: UTF-8 -*-
 """
-TCP server， 模拟接收机功能
+TCP server， 模拟发送端功能
 实现：
-1. 对0x20命令的响应
 """
 
 import argparse
 import socket
+import time
 from protocol import Protocol
 
 parser = argparse.ArgumentParser(description="simple tcp server program")
@@ -25,10 +25,9 @@ while True:
     connection, addr = server.accept()
     print('new client addr is : {0}'.format(addr))
 
-    while True:
-        data = connection.recv(102400)
+    time.sleep(3)
 
-        response = protocol.paserData(data)
-        connection.send(response)
+    connection.send(protocol.encode(0x20))
+    break
 
 connection.close()

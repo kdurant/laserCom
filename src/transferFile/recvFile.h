@@ -9,6 +9,8 @@ class RecvFile : public QObject
 {
     Q_OBJECT
 private:
+    QString    fileName;
+    int        fileSize;
     bool       isRecvNewData;  // 是否收到数据
     QByteArray frameHead;
     QByteArray frameTail;
@@ -35,12 +37,19 @@ public:
 
     RecvState state{IDLE};
 
+    void setFileInfo(QByteArray &data)
+    {
+        fileName = data.mid(0, data.indexOf('?'));
+        fileSize = Common::ba2int(data.mid(data.indexOf('?') + 1));
+    }
+
     bool processFileBlock(QByteArray &data);
 
 signals:
     void errorFileBlockReady(void);
+    void fileBlockReady(QByteArray &data);
 
 public slots:
-    void paserFileBlock(QByteArray &data);
+    void paserNewData(QByteArray &data);
 };
 #endif

@@ -39,6 +39,8 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
                 transmitFrame = transmitFrame.mid(6, 4);
                 emit heartBeatReady(Common::ba2int(transmitFrame));
                 break;
+            /**
+              */
             case UserProtocol::SlaveUp::RESPONSE_FILE_INFO:
                 transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
 
@@ -52,6 +54,14 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
                 transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
                 emit masterFileBlockReady(transmitFrame);
                 break;
+
+            /**
+              */
+            case UserProtocol::MasterSet::SET_FILE_INFO:
+                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+                emit slaveFileInfoReady(transmitFrame);
+                break;
+
             default:
                 QString error = "Undefined command received!";
                 emit    errorDataReady(error);

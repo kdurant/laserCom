@@ -25,9 +25,10 @@ while True:
     connection, addr = server.accept()
     print('new client addr is : {0}'.format(addr))
 
-    time.sleep(3)
+    while True:
+        time.sleep(2)
 
-    connection.send(protocol.encode(0x20))
-    break
+        connection.send(protocol.encode(0x20))
+    # break
 
 connection.close()

@@ -34,32 +34,32 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
         QByteArray transmitFrame;
         switch(command)
         {
+            // 主机，从机进行相同的处理
             case UserProtocol::SlaveUp::HEART_BEAT:
                 transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
                 transmitFrame = transmitFrame.mid(6, 4);
                 emit heartBeatReady(Common::ba2int(transmitFrame));
                 break;
-            /**
-              */
-            case UserProtocol::SlaveUp::RESPONSE_FILE_INFO:
-                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
 
-                if(getMasterAddr(data) == UserProtocol::MASTER_DEV)  // 从机收到主机的信息数据
-                    emit slaveFileInfoReady(transmitFrame);
-                else  // 主机收到从机对文件信息的应答
-                    emit masterFileInfoReady(transmitFrame);
-                break;
-
-            case UserProtocol::SlaveUp::RESPONSE_FILE_DATA:
-                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
-                emit masterFileBlockReady(transmitFrame);
-                break;
-
-            /**
-              */
+            // 1. 主机发送SET_FILE_INFO
+            // 2. 作为从机，收到主机发送的SET_FILE_INFO命令
             case UserProtocol::MasterSet::SET_FILE_INFO:
                 transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
                 emit slaveFileInfoReady(transmitFrame);
+                break;
+
+            //3. 作为主机，收到从机发送的RESPONSE_FILE_INFO
+            case UserProtocol::SlaveUp::RESPONSE_FILE_INFO:
+                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+                emit masterFileInfoReady(transmitFrame);
+                break;
+
+            // 1. 主机发送SET_FILE_DATA
+            // 2. detail as follow
+            // 3. 作为主机，收到从机发送的RESPONSE_FILE_DATA
+            case UserProtocol::SlaveUp::RESPONSE_FILE_DATA:
+                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+                emit masterFileBlockReady(transmitFrame);
                 break;
 
             default:
@@ -70,6 +70,7 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
     }
     else
     {
+        // 2. 作为从机，收到SET_FILE_DATA命令，将数据先缓存
         emit slaveFileBlockReady(data);
     }
 }

@@ -101,7 +101,7 @@ class Protocol(object):
             frame += command.to_bytes(length=1, byteorder='big', signed=False)
             fileName = "test.txt"
             fileSize = 1024
-            length = len(fileName) + 4
+            length = len(fileName) + 5
             frame += length.to_bytes(length=4, byteorder='big', signed=False)
             frame += bytes(fileName, encoding="utf8")
             frame += bytes('?', encoding="utf8")

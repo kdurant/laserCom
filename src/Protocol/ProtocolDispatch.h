@@ -61,6 +61,12 @@ public:
     {
         return data.mid(FrameField::DATA_POS, FrameField::DATA_LEN).toHex().toUInt(nullptr, 16);
     }
+
+    static QByteArray getData(QByteArray &data)
+    {
+        quint32 data_len = getDataLen(data);
+        return data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+    }
 public slots:
     void encode(qint32 command, QByteArray &data);
 

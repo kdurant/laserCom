@@ -33,6 +33,11 @@ public:
     {
         SEP_CHAR = '?',
     };
+
+    enum status
+    {
+        SUCCESS = 0x11,
+    };
 };
 
 #endif

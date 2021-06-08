@@ -77,8 +77,8 @@ private:
     SendFile *        sendFile;
     quint32           heartBeatCnt{0};
     quint32           recvByteCnt{0};
-
-    QVector<bool> sendFileBlockStatus{false};
+    QFile             userFile;
+    QVector<bool>     sendFileBlockStatus{false};
 
     OpStatus opStatus;
 };

@@ -181,9 +181,10 @@ void MainWindow::initSignalSlot()
         }
     });
 
-    /*
-     接收端对协议的处理
-     */
+    connect(dispatch, &ProtocolDispatch::frameDataReady, this, [this](QByteArray &data) {
+        tcpClient->write(data);
+    });
+
     connect(dispatch, &ProtocolDispatch::heartBeatReady, this, [this](quint32 cnt) {
         ui->label_heartBeatCnt->setText("心跳包序号：" + QString::number(cnt));
         QImage light_green(":qss/light_green.png");
@@ -193,32 +194,42 @@ void MainWindow::initSignalSlot()
         ui->label_statusLight->setPixmap(QPixmap::fromImage(light_gray));
     });
 
-    // 收到正确的文件信息，立刻响应发送端
+    /*
+     接收端对协议的处理
+     */
+
     // 1. 从机收到主机发送的信号（0x20）
     // 2. 主机同样会接收到相似的信号(0x21)
     // 但处理方法不一样，所以信号名要加以区分
+    // 收到正确的文件信息，立刻响应发送端
     connect(dispatch, &ProtocolDispatch::slaveFileInfoReady, this, [this](QByteArray &data) {
-        dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
         recvFile->setFileInfo(data);
+        userFile.setFileName(recvFile->getFileName());
+        if(!userFile.open(QIODevice::WriteOnly))
+        {
+            QMessageBox::critical(this, "错误", "创建文件失败");
+        }
+        dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
+    });
+
+    connect(recvFile, &RecvFile::fileBlockReady, this, [this](quint32 blockNo, quint32 validLen, QByteArray &recvData) {
+        qint64 offset = 0;
+        offset        = blockNo * validLen;
+        userFile.seek(offset);
+        userFile.write(recvData);
+
+        QByteArray frame = recvFile->packResponse(blockNo, validLen);
+        dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
+
+        if(recvFile->isRecvAllBlock())
+        {
+            userFile.close();
+        }
     });
     // 收到文件块数据，发送接收文件模块处理
     connect(dispatch, &ProtocolDispatch::slaveFileBlockReady, recvFile, &RecvFile::paserNewData);
 
-    /*
-     发送端对信号的处理
-     */
-    connect(dispatch, &ProtocolDispatch::frameDataReady, this, [this](QByteArray &data) {
-        tcpClient->write(data);
-    });
-
-    connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFile, &SendFile::setNewData);
-    connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
-        int curretFileBlock                  = Common::ba2int(data.mid(5, 4));
-        sendFileBlockStatus[curretFileBlock] = true;
-    });
-
-    connect(sendFile, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
-
+    //
     connect(ui->btn_querySend, &QPushButton::pressed, this, [this]() {
         QString data = "AT+" + ui->comboBox_query->currentText() + "?\r\n";
         tcpClient->write(data.toLatin1());
@@ -260,6 +271,17 @@ void MainWindow::initSignalSlot()
         QString name = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
         ui->lineEdit_saveFileName->setText(name);
     });
+
+    /*
+     发送端处理流程
+     */
+    connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFile, &SendFile::setNewData);
+    connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
+        int curretFileBlock                  = Common::ba2int(data.mid(5, 4));
+        sendFileBlockStatus[curretFileBlock] = true;
+    });
+
+    connect(sendFile, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
 
     connect(ui->btn_sendFile, &QPushButton::pressed, this, [this]() {
         QString filePath = ui->lineEdit_sendFile->text();

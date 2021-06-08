@@ -5,9 +5,14 @@ bool SendFile::sendFileInfo(void)
     QByteArray frame;
     frame.append(fileName.toLatin1());
     frame.append('?');
+
     QFile   file(fileName);
     quint32 size = file.size();
     frame.append(Common::int2ba(size));
+    frame.append('?');
+
+    frame.append(Common::int2ba(blockSize));
+
     emit sendDataReady(UserProtocol::SET_FILE_INFO, frame);
 
     QEventLoop waitLoop;  // 等待响应数据，或者1000ms超时

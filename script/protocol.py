@@ -106,6 +106,34 @@ class Protocol(object):
             frame += bytes(fileName, encoding="utf8")
             frame += bytes('?', encoding="utf8")
             frame += fileSize.to_bytes(length=4, byteorder='big', signed=False)
+        elif command == self.SET_FILE_DATA:
+            # command
+            frame += command.to_bytes(length=1, byteorder='big', signed=False)
+
+            # data lenghth
+            length = 4096 + 15
+            frame += length.to_bytes(length=4, byteorder='big', signed=False)
+            frame += bytes('?', encoding="utf8")
+            """
+            1.	文件被划分成文件块的总个数（4Byte）
+            2.	当前传输的文件块序号，从0开始（4Byte）
+            3.	当前传输文件块有效字节数（4Byte）
+            4.	文件块具体内容
+            """
+            length = 1
+            frame += length.to_bytes(length=4, byteorder='big', signed=False)
+            frame += bytes('?', encoding="utf8")
+
+            no = 0
+            frame += no.to_bytes(length=4, byteorder='big', signed=False)
+            frame += bytes('?', encoding="utf8")
+
+            length = 4096
+            frame += length.to_bytes(length=4, byteorder='big', signed=False)
+            frame += bytes('?', encoding="utf8")
+
+            frame += b'\x11' * 2048
+            frame += b'\x22' * 2048
 
         md5 = hashlib.md5(frame).digest()
         frame += md5

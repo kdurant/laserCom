@@ -26,7 +26,7 @@ bool RecvFile::processFileBlock(QByteArray &data)
         //        quint32    blockTotal = Common::ba2int(fileBlock.mid(0, 4));
         quint32    blockNo  = Common::ba2int(fileBlock.mid(5, 4));
         quint32    validLen = Common::ba2int(fileBlock.mid(10, 4));
-        QByteArray recvData = data.mid(16, validLen);
+        QByteArray recvData = fileBlock.mid(15, validLen);
 
         blockStatus[blockNo] = true;
         emit fileBlockReady(blockNo, validLen, recvData);
@@ -41,12 +41,13 @@ bool RecvFile::processFileBlock(QByteArray &data)
  */
 void RecvFile::paserNewData(QByteArray &data)
 {
-    int headOffset = 0;
-    int tailOffset = 0;
+    int headOffset = -1;
+    int tailOffset = -1;
 
     headOffset = data.indexOf(frameHead);
-    tailOffset = data.indexOf(frameHead);
+    tailOffset = data.indexOf(frameTail);
 
+    // 一个TCP包内发现了帧头和桢尾，几乎不可能
     if(headOffset >= 0 && tailOffset >= 0)
     {
         state = IDLE;
@@ -60,6 +61,7 @@ void RecvFile::paserNewData(QByteArray &data)
             fileBlockData.append(data.mid(headOffset));
             state = RECV_DATA;
         }
+        return;
     }
 
     if(state == RECV_DATA)
@@ -67,7 +69,9 @@ void RecvFile::paserNewData(QByteArray &data)
         if(tailOffset >= 0)
         {
             fileBlockData.append(data.mid(0, tailOffset + 8));
+            processFileBlock(fileBlockData);
             state = IDLE;
+            fileBlockData.clear();
         }
         else
         {

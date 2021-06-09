@@ -8,6 +8,13 @@
 #include "protocol.h"
 #include "ProtocolDispatch.h"
 
+/**
+* @brief 接收文件处理流程
+* 1. 主程序接收到0x20命令后，会将文件相关信息发送给本模块.
+* 2. 主程序发送0x21命令，发送端接收到响应就就会发送文件块数据
+* 3. 文件块数据比较大，一般不可能在同一个TCP包中传输过来，所有使用paserNewData()获得完整的文件块包
+* 4. processFileBlock() 得到有效数据及其他必要信息，进行写文件操作
+*/
 class RecvFile : public QObject
 {
     Q_OBJECT
@@ -29,8 +36,8 @@ public:
         quint8 head[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
         quint8 hail[] = {0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe};
 
-        QByteArray frameHead = QByteArray((char *)head, 8);
-        QByteArray frameTail = QByteArray((char *)hail, 8);
+        frameHead = QByteArray((char *)head, 8);
+        frameTail = QByteArray((char *)hail, 8);
     };
 
     enum RecvState

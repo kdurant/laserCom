@@ -283,6 +283,7 @@ void MainWindow::initSignalSlot()
     connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
         int curretFileBlock                  = Common::ba2int(data.mid(5, 4));
         sendFileBlockStatus[curretFileBlock] = true;
+        qDebug() << "curretFileBlock is: " << curretFileBlock;
     });
 
     connect(sendFile, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
@@ -328,6 +329,7 @@ void MainWindow::initSignalSlot()
         int                 fileBlockNumber = sendFile->splitData(allFileBlock);
 
         //3. 初始化 页 发送状态
+        sendFileBlockStatus.clear();
         for(int i = 0; i < fileBlockNumber; i++)
             sendFileBlockStatus.append(false);
         //dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[0]);
@@ -339,11 +341,19 @@ void MainWindow::initSignalSlot()
                 if(sendFileBlockStatus[i] == false)
                 {
                     dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+                    if(sysPara.mode == "debug_network")
+                        Common::sleepWithoutBlock(300);
                 }
             }
             cycleCnt++;
             Common::sleepWithoutBlock(10);  // 等待响应处理，更新sendFileBlockStatus状态
-        }                                   // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
+            qDebug() << "send No. " << cycleCnt;
+            for(auto i : sendFileBlockStatus)
+            {
+                qDebug() << i << "\t";
+            }
+            qDebug() << "----------";
+        }  // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
         while(std::all_of(sendFileBlockStatus.begin(), sendFileBlockStatus.end(), [](int i) {
                   return i == true;
               }) == false &&

@@ -39,6 +39,12 @@ class Protocol(object):
             return data
 
         elif command == self.SET_FILE_INFO:
+            """
+            在通信协议的数据段中划分三个子参数，以‘?‘分开
+            1.	文件名，（最长128字节，包含文件后缀）
+            2.	文件大小，以字节为单位。
+            3.	本次传输的默认文件块大小，以字节为单位。
+            """
             result += self.SLAVE_DEV.to_bytes(1, byteorder='big')
             result += self.MASTER_DEV.to_bytes(1, byteorder='big')
             result += self.RESPONSE_FILE_INFO.to_bytes(1, byteorder='big')
@@ -54,13 +60,20 @@ class Protocol(object):
             result += self.PROTOCAL_TAIL
             return result
         elif command == self.SET_FILE_DATA:
+            """
+            1.	文件被划分成文件块的总个数（4Byte）
+            2.	当前传输的文件块序号，从0开始（4Byte）
+            3.	当前传输文件块有效字节数（4Byte）
+            4.	成功时返回0x11；失败时返回0x22
+            """
             result += self.SLAVE_DEV.to_bytes(1, byteorder='big')
             result += self.MASTER_DEV.to_bytes(1, byteorder='big')
             result += self.RESPONSE_FILE_DATA.to_bytes(1, byteorder='big')
 
-            dataLen = self.getDataLen(data)
+            dataLen = 16
             dataField = self.getDataField(data)
 
+            result += dataLen.to_bytes(4, byteorder='big')
             result += dataField[:15]
             result += b'\x11'
 

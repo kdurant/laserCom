@@ -56,6 +56,14 @@ private:
         SEND_FILE,
         RECV_FILE,
     };
+    struct _sys_para_
+    {
+        QString pcIP;
+        QString mode;
+        int     blockSize;
+        int     repeatNum;
+    } sysPara{
+        "", "", 0, 3};
 
     Ui::MainWindow *ui;
     QSettings *     configIni;
@@ -66,7 +74,6 @@ private:
     qint32      tcpPort;
 
     QString     deviceIP{"192.168.1.10"};
-    QString     pcIP;
     QTcpSocket *tcpClient;
     qint32      tcpStatus;
     AT          at;

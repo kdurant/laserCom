@@ -48,24 +48,28 @@ void MainWindow::initParameter()
         file.write("[SendFile]\n");
         file.write("; 1M= 1048576, 512K = 524288, 256K = 262144, 128K = 131072, 64K = 65536, 32K = 32768\n");
         file.write("blockSize = 8192\n");
+        file.write("repeatNum = 3\n");
         file.close();
     }
 
-    configIni = new QSettings("./config.ini", QSettings::IniFormat);
+    configIni         = new QSettings("./config.ini", QSettings::IniFormat);
+    sysPara.mode      = configIni->value("System/mode").toString();
+    sysPara.blockSize = configIni->value("SendFile/blockSize").toUInt();
+    sysPara.repeatNum = configIni->value("SendFile/repeatNum").toUInt();
 
-    if(configIni->value("System/mode").toString() == "debug_network")
-        pcIP = "127.0.0.1";
+    if(sysPara.mode == "debug_network")
+        sysPara.pcIP = "127.0.0.1";
     else
-        pcIP = read_ip_address();
+        sysPara.pcIP = read_ip_address();
 
-    if(configIni->value("System/mode").toString() == "debug_network")
+    if(sysPara.mode == "debug_network")
     {
         ui->lineEdit_pcIP->setText("127.0.0.1");
         ui->lineEdit_deviceIP->setText("127.0.0.1");
     }
     else
     {
-        ui->lineEdit_pcIP->setText(pcIP);
+        ui->lineEdit_pcIP->setText(sysPara.pcIP);
         ui->lineEdit_deviceIP->setText(deviceIP);
     }
 }
@@ -148,7 +152,7 @@ void MainWindow::initSignalSlot()
         if(ui->rbt_connect->isChecked() == true)
         {
             deviceIP = ui->lineEdit_deviceIP->text();
-            if(deviceIP.mid(0, deviceIP.lastIndexOf(".")) != pcIP.mid(0, pcIP.lastIndexOf(".")))
+            if(deviceIP.mid(0, deviceIP.lastIndexOf(".")) != sysPara.pcIP.mid(0, sysPara.pcIP.lastIndexOf(".")))
             {
                 QMessageBox::warning(this, "警告", "网段不一致，请修改IP");
                 ui->rbt_connect->setChecked(false);
@@ -285,7 +289,7 @@ void MainWindow::initSignalSlot()
 
     connect(ui->btn_sendFile, &QPushButton::pressed, this, [this]() {
         QString filePath = ui->lineEdit_sendFile->text();
-        if(configIni->value("System/mode").toString() == "debug_network")
+        if(sysPara.mode == "debug_network")
             filePath = "ui_mainwindow.h";
 
         if(filePath.isEmpty())
@@ -306,44 +310,44 @@ void MainWindow::initSignalSlot()
 
         // 1. 发送文件信息
         quint8 sendCnt = 0;
-        while(sendCnt < 3)
+        while(sendCnt < sysPara.repeatNum)
         {
             if(sendFile->sendFileInfo())
                 break;
             else
                 sendCnt++;
         }
-        if(sendCnt == 3)
+        if(sendCnt == sysPara.repeatNum)
         {
             ui->statusbar->showMessage("SET_FILE_INFO失败，请重新发送文件");
             //            return;
         }
         // 2. 分割文件
-        sendFile->setFileBlockSize(configIni->value("SendFile/blockSize").toUInt());
+        sendFile->setFileBlockSize(sysPara.blockSize);
         QVector<QByteArray> allFileBlock;
         int                 fileBlockNumber = sendFile->splitData(allFileBlock);
 
         //3. 初始化 页 发送状态
         for(int i = 0; i < fileBlockNumber; i++)
             sendFileBlockStatus.append(false);
-        //        dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[0]);
-        //        int cycleCnt = 0;
-        //        do
-        //        {
-        //            for(int i = 0; i < fileBlockNumber; i++)
-        //            {
-        //                if(sendFileBlockStatus[i] == false)
-        //                {
-        //                    dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
-        //                }
-        //            }
-        //            cycleCnt++;
-        //            Common::sleepWithoutBlock(10);  // 等待响应处理，更新sendFileBlockStatus状态
-        //        }                                   // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
-        //        while(std::all_of(sendFileBlockStatus.begin(), sendFileBlockStatus.end(), [](int i) {
-        //                  return i == true;
-        //              }) == false &&
-        //              cycleCnt < 5);
+        //dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[0]);
+        int cycleCnt = 0;
+        do
+        {
+            for(int i = 0; i < fileBlockNumber; i++)
+            {
+                if(sendFileBlockStatus[i] == false)
+                {
+                    dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+                }
+            }
+            cycleCnt++;
+            Common::sleepWithoutBlock(10);  // 等待响应处理，更新sendFileBlockStatus状态
+        }                                   // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
+        while(std::all_of(sendFileBlockStatus.begin(), sendFileBlockStatus.end(), [](int i) {
+                  return i == true;
+              }) == false &&
+              cycleCnt < sysPara.repeatNum);
     });
 
     connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {

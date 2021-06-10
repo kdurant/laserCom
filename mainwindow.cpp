@@ -17,8 +17,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     dispatch = new ProtocolDispatch();
-    recvFile = new RecvFile();
-    sendFile = new SendFile();
+    recvFlow = new RecvFile();
+    sendFlow = new SendFile();
     timer1s  = startTimer(1000);
     opStatus = IDLE;
 
@@ -207,8 +207,8 @@ void MainWindow::initSignalSlot()
     // 但处理方法不一样，所以信号名要加以区分
     // 收到正确的文件信息，立刻响应发送端
     connect(dispatch, &ProtocolDispatch::slaveFileInfoReady, this, [this](QByteArray &data) {
-        recvFile->setFileInfo(data);
-        userFile.setFileName(recvFile->getFileName());
+        recvFlow->setFileInfo(data);
+        userFile.setFileName(recvFlow->getFileName());
         if(!userFile.open(QIODevice::WriteOnly))
         {
             QMessageBox::critical(this, "错误", "创建文件失败");
@@ -216,22 +216,22 @@ void MainWindow::initSignalSlot()
         dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
     });
 
-    connect(recvFile, &RecvFile::fileBlockReady, this, [this](quint32 blockNo, quint32 validLen, QByteArray &recvData) {
+    connect(recvFlow, &RecvFile::fileBlockReady, this, [this](quint32 blockNo, quint32 validLen, QByteArray &recvData) {
         qint64 offset = 0;
         offset        = blockNo * validLen;
         userFile.seek(offset);
         userFile.write(recvData);
 
-        QByteArray frame = recvFile->packResponse(blockNo, validLen);
+        QByteArray frame = recvFlow->packResponse(blockNo, validLen);
         dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
 
-        if(recvFile->isRecvAllBlock())
+        if(recvFlow->isRecvAllBlock())
         {
             userFile.close();
         }
     });
     // 收到文件块数据，发送接收文件模块处理
-    connect(dispatch, &ProtocolDispatch::slaveFileBlockReady, recvFile, &RecvFile::paserNewData);
+    connect(dispatch, &ProtocolDispatch::slaveFileBlockReady, recvFlow, &RecvFile::paserNewData);
 
     //
     connect(ui->btn_querySend, &QPushButton::pressed, this, [this]() {
@@ -279,14 +279,14 @@ void MainWindow::initSignalSlot()
     /*
      发送端处理流程
      */
-    connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFile, &SendFile::setNewData);
+    connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFlow, &SendFile::setNewData);
     connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
         int curretFileBlock                  = Common::ba2int(data.mid(5, 4));
         sendFileBlockStatus[curretFileBlock] = true;
         qDebug() << "curretFileBlock is: " << curretFileBlock;
     });
 
-    connect(sendFile, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
+    connect(sendFlow, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
 
     connect(ui->btn_sendFile, &QPushButton::pressed, this, [this]() {
         QString filePath = ui->lineEdit_sendFile->text();
@@ -307,13 +307,13 @@ void MainWindow::initSignalSlot()
 
         ui->progressBar_sendFile->setMaximum(QFile(filePath).size());
         ui->progressBar_sendFile->setValue(0);
-        sendFile->setFileName(filePath);
+        sendFlow->setFileName(filePath);
 
         // 1. 发送文件信息
         quint8 sendCnt = 0;
         while(sendCnt < sysPara.repeatNum)
         {
-            if(sendFile->sendFileInfo())
+            if(sendFlow->sendFileInfo())
                 break;
             else
                 sendCnt++;
@@ -324,9 +324,9 @@ void MainWindow::initSignalSlot()
             //            return;
         }
         // 2. 分割文件
-        sendFile->setFileBlockSize(sysPara.blockSize);
+        sendFlow->setFileBlockSize(sysPara.blockSize);
         QVector<QByteArray> allFileBlock;
-        int                 fileBlockNumber = sendFile->splitData(allFileBlock);
+        int                 fileBlockNumber = sendFlow->splitData(allFileBlock);
 
         //3. 初始化 页 发送状态
         sendFileBlockStatus.clear();

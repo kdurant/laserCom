@@ -80,8 +80,8 @@ private:
     bool        testStatus{false};
 
     ProtocolDispatch *dispatch;
-    RecvFile *        recvFile;
-    SendFile *        sendFile;
+    RecvFile *        recvFlow;
+    SendFile *        sendFlow;
     quint32           heartBeatCnt{0};
     quint32           recvByteCnt{0};
     QFile             userFile;

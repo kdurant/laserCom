@@ -48,17 +48,14 @@ int SendFile::splitData(QVector<QByteArray>& allFileBlock)
         return 0;
     file.open(QIODevice::ReadOnly);
 
-    quint32    fileSize        = file.size();
-    quint32    fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
+    fileSize                   = file.size();
+    fileBlockNumber            = qCeil(fileSize / (qreal)blockSize);
     quint32    curretFileBlock = 0;
     quint32    validLen        = 0;
     char*      buffer          = new char[blockSize];
     QByteArray blockData;
     QByteArray frame;
     QByteArray tmp;
-
-    for(int i = 0; i < fileBlockNumber; i++)
-        blockStatus[i] = false;
 
     while(!file.atEnd())
     {

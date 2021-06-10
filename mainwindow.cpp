@@ -281,8 +281,8 @@ void MainWindow::initSignalSlot()
      */
     connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFlow, &SendFile::setNewData);
     connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
-        int curretFileBlock                  = Common::ba2int(data.mid(5, 4));
-        sendFileBlockStatus[curretFileBlock] = true;
+        int curretFileBlock = Common::ba2int(data.mid(5, 4));
+        sendFlow->setBlockStatus(curretFileBlock, true);
         qDebug() << "curretFileBlock is: " << curretFileBlock;
     });
 
@@ -329,16 +329,14 @@ void MainWindow::initSignalSlot()
         int                 fileBlockNumber = sendFlow->splitData(allFileBlock);
 
         //3. 初始化 页 发送状态
-        sendFileBlockStatus.clear();
-        for(int i = 0; i < fileBlockNumber; i++)
-            sendFileBlockStatus.append(false);
+        sendFlow->initBlockStatus();
         //dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[0]);
         int cycleCnt = 0;
         do
         {
             for(int i = 0; i < fileBlockNumber; i++)
             {
-                if(sendFileBlockStatus[i] == false)
+                if(sendFlow->getBlockStatus(i) == false)
                 {
                     dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
                     if(sysPara.mode == "debug_network")
@@ -348,15 +346,14 @@ void MainWindow::initSignalSlot()
             cycleCnt++;
             Common::sleepWithoutBlock(10);  // 等待响应处理，更新sendFileBlockStatus状态
             qDebug() << "send No. " << cycleCnt;
-            for(auto i : sendFileBlockStatus)
+            for(int i = 0; i < fileBlockNumber; i++)
             {
-                qDebug() << i << "\t";
+                qDebug() << sendFlow->getBlockStatus(i) << "\t";
             }
             qDebug() << "----------";
         }  // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
-        while(std::all_of(sendFileBlockStatus.begin(), sendFileBlockStatus.end(), [](int i) {
-                  return i == true;
-              }) == false &&
+
+        while(sendFlow->isSendAllBlock() == false &&
               cycleCnt < sysPara.repeatNum);
     });
 

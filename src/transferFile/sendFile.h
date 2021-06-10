@@ -1,5 +1,6 @@
 #ifndef SENDFILE_H
 #define SENDFILE_H
+#include <algorithm>
 #include <QtCore>
 #include <common.h>
 #include "protocol.h"
@@ -10,7 +11,9 @@ class SendFile : public QObject
     Q_OBJECT
 private:
     QString       fileName;
+    quint32       fileSize;
     quint32       blockSize;
+    quint32       fileBlockNumber;
     QByteArray    recvData;
     QVector<bool> blockStatus;
 
@@ -47,6 +50,14 @@ public:
     bool sendFileBlock(QByteArray &fileBlock);
 
     bool send(void);
+
+    void initBlockStatus(void)
+    {
+        blockStatus.clear();
+
+        for(int i = 0; i < fileBlockNumber; i++)
+            blockStatus.append(false);
+    }
 
     void setBlockStatus(int i, bool status)
     {

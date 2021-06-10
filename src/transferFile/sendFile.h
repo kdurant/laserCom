@@ -12,7 +12,7 @@ private:
     QString       fileName;
     quint32       blockSize;
     QByteArray    recvData;
-    QVector<bool> fileBlockStatus;
+    QVector<bool> blockStatus;
 
 public:
     SendFile() :
@@ -47,6 +47,25 @@ public:
     bool sendFileBlock(QByteArray &fileBlock);
 
     bool send(void);
+
+    void setBlockStatus(int i, bool status)
+    {
+        if(i > blockStatus.size())
+            return;
+        blockStatus[i] = status;
+    }
+    bool getBlockStatus(int i)
+    {
+        if(i > blockStatus.size())
+            return false;
+        return blockStatus[i];
+    }
+    bool isSendAllBlock(void)
+    {
+        return std::all_of(blockStatus.begin(), blockStatus.end(), [](int i) {
+            return i == true;
+        });
+    }
 
 signals:
     void sendDataReady(qint32 command, QByteArray &data);  // 需要发送的数据已经准备好

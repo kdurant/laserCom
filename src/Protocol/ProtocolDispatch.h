@@ -65,7 +65,7 @@ public:
     {
         quint32    data_len = getDataLen(data);
         QByteArray frame;
-        frame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN + 1, data_len);
+        frame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
         return frame;
     }
 public slots:

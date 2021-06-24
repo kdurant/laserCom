@@ -41,43 +41,41 @@ bool RecvFile::processFileBlock(QByteArray &data)
  */
 void RecvFile::paserNewData(QByteArray &data)
 {
+    QByteArray frame;
+    fileBlockData.append(data);
     int headOffset = -1;
     int tailOffset = -1;
 
-    headOffset = data.indexOf(frameHead);
-    tailOffset = data.indexOf(frameTail);
+    headOffset = fileBlockData.indexOf(frameHead);
+    tailOffset = fileBlockData.indexOf(frameTail);
 
-    // 一个TCP包内发现了帧头和桢尾，几乎不可能
-    if(headOffset >= 0 && tailOffset >= 0)
+    if(headOffset == -1 || tailOffset == -1)
     {
-        fileBlockData = data.mid(headOffset, (tailOffset + 8) - headOffset);
-        processFileBlock(fileBlockData);
-        state = IDLE;
-        return;
-    }
-
-    if(state == IDLE)
-    {
-        if(headOffset >= 0)
+        // 文件块很大，一次TCP数据里没有帧头和帧尾
+        if(headOffset == -1 && tailOffset == -1)
         {
-            fileBlockData.append(data.mid(headOffset));
-            state = RECV_DATA;
+            // 等下一次进来数据再接着处理
+            return;
         }
-        return;
+        else if(headOffset == -1 && tailOffset > -1)
+        {  // 没有帧头，但有帧尾，说明帧头数据丢失
+            fileBlockData = fileBlockData.mid(tailOffset + 8);
+        }
+        else if(headOffset > -1 && tailOffset == -1)
+        {  // 文件块数据的开始
+            // 等下一次进来数据再接着处理
+            return;
+        }
     }
-
-    if(state == RECV_DATA)
+    else
     {
-        if(tailOffset >= 0)
+        if(headOffset == 0)
         {
-            fileBlockData.append(data.mid(0, tailOffset + 8));
-            processFileBlock(fileBlockData);
-            state = IDLE;
-            fileBlockData.clear();
+            frame         = fileBlockData.mid(0, tailOffset + 8);
+            fileBlockData = fileBlockData.mid(tailOffset + 8);
+            processFileBlock(frame);
         }
         else
-        {
-            fileBlockData.append(data);
-        }
+            qDebug() << "会出现吗?";
     }
 }

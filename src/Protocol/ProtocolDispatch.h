@@ -40,7 +40,6 @@ public:
     ~ProtocolDispatch()
     {
     }
-
     void parserFrame(QByteArray &data);
 
     static uint32_t getCommand(QByteArray &data)

@@ -15,63 +15,105 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
 {
     QByteArray head = Common::QString2QByteArray(FrameHead);
     QByteArray tail = Common::QString2QByteArray(FrameTail);
+    QByteArray frame;
 
-    if(data.startsWith(head) && data.endsWith(tail))
+    int headOffset = -1;
+    int tailOffset = -1;
+
+    while(true)
     {
-        int        len        = data.size();
-        QByteArray validData  = data.mid(0, len - 24);
-        QByteArray recv_md5   = data.mid(len - 24, 16);
-        QByteArray expect_md5 = QCryptographicHash::hash(validData, QCryptographicHash::Md5);
-        if(recv_md5 != expect_md5)
+        headOffset = data.indexOf(head);
+        tailOffset = data.indexOf(tail);
+
+        if(headOffset == -1 || tailOffset == -1)
         {
-            QString error = "Checksum Error!";
-            emit    errorDataReady(error);
-            return;
+            // 1. 没有找到有效的帧头和桢尾
+            if(headOffset == -1 && tailOffset == -1)
+                return;
+
+            // 2. ...tail
+            if(headOffset == -1 && tailOffset > -1)
+            {
+                frame = data.mid(0, tailOffset + 8);
+                emit slaveFileBlockReady(frame);
+                if((tailOffset + 8) == data.size())  // 数据处理完成
+                    return;
+            }
+
+            // 3. head ...
+            if(headOffset > -1 && tailOffset == -1)
+            {
+                emit slaveFileBlockReady(data);
+                break;
+            }
         }
 
-        uint32_t   command  = getCommand(data);
-        uint32_t   data_len = getDataLen(data);
-        QByteArray transmitFrame;
-        switch(command)
+        // 4. ...tail head ... tail
+        if(tailOffset < headOffset)
         {
-            // 主机，从机进行相同的处理
-            case UserProtocol::SlaveUp::HEART_BEAT:
-                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
-                transmitFrame = transmitFrame.mid(6, 4);
-                emit heartBeatReady(Common::ba2int(transmitFrame));
-                break;
+            frame = data.mid(0, tailOffset + 8);
+            emit slaveFileBlockReady(frame);
+        }
 
-            // 1. 主机发送SET_FILE_INFO
-            // 2. 作为从机，收到主机发送的SET_FILE_INFO命令
-            case UserProtocol::MasterSet::SET_FILE_INFO:
-                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
-                emit slaveFileInfoReady(transmitFrame);
-                break;
+        // 5. head ... tail
+        if(tailOffset > headOffset)
+        {
+            frame = data.mid(headOffset, (tailOffset + 8) - headOffset);
 
-            //3. 作为主机，收到从机发送的RESPONSE_FILE_INFO
-            case UserProtocol::SlaveUp::RESPONSE_FILE_INFO:
-                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
-                emit masterFileInfoReady(transmitFrame);
-                break;
-
-            // 1. 主机发送SET_FILE_DATA
-            // 2. detail as follow
-            // 3. 作为主机，收到从机发送的RESPONSE_FILE_DATA
-            case UserProtocol::SlaveUp::RESPONSE_FILE_DATA:
-                transmitFrame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
-                emit masterFileBlockReady(transmitFrame);
-                break;
-
-            default:
-                QString error = "Undefined command received!";
+            int        len        = frame.size();
+            QByteArray validData  = frame.mid(0, len - 24);
+            QByteArray recv_md5   = frame.mid(len - 24, 16);
+            QByteArray expect_md5 = QCryptographicHash::hash(validData, QCryptographicHash::Md5);
+            if(recv_md5 != expect_md5)
+            {
+                QString error = "Checksum Error!";
                 emit    errorDataReady(error);
-                break;
+                return;
+            }
+
+            uint32_t   command  = getCommand(frame);
+            uint32_t   data_len = getDataLen(frame);
+            QByteArray transmitFrame;
+            switch(command)
+            {
+                // 主机，从机进行相同的处理
+                case UserProtocol::SlaveUp::HEART_BEAT:
+                    transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+                    transmitFrame = transmitFrame.mid(6, 4);
+                    emit heartBeatReady(Common::ba2int(transmitFrame));
+                    break;
+
+                // 1. 主机发送SET_FILE_INFO
+                // 2. 作为从机，收到主机发送的SET_FILE_INFO命令
+                case UserProtocol::MasterSet::SET_FILE_INFO:
+                    transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+                    emit slaveFileInfoReady(transmitFrame);
+                    break;
+
+                //3. 作为主机，收到从机发送的RESPONSE_FILE_INFO
+                case UserProtocol::SlaveUp::RESPONSE_FILE_INFO:
+                    transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+                    emit masterFileInfoReady(transmitFrame);
+                    break;
+
+                // 1. 主机发送SET_FILE_DATA
+                // 2. detail as follow
+                // 3. 作为主机，收到从机发送的RESPONSE_FILE_DATA
+                case UserProtocol::SlaveUp::RESPONSE_FILE_DATA:
+                    transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+                    emit masterFileBlockReady(transmitFrame);
+                    break;
+
+                default:
+                    QString error = "Undefined command received!";
+                    emit    errorDataReady(error);
+                    break;
+            }
         }
-    }
-    else
-    {
-        // 2. 作为从机，收到SET_FILE_DATA命令，将数据先缓存
-        emit slaveFileBlockReady(data);
+
+        data       = data.mid(tailOffset + 8);
+        headOffset = -1;
+        tailOffset = -1;
     }
 }
 

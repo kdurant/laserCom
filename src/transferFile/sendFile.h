@@ -18,15 +18,22 @@ private:
     QVector<bool> blockStatus;
 
 public:
-    SendFile() :
-        fileName(""), blockSize(0)
+    SendFile()
+        : fileName(""), blockSize(0)
     {
     }
+
+    /**
+     * @brief setFileName
+     * 需要去掉文件信息中的路径，只保留文件名
+     * @param name
+     */
     void setFileName(QString const &name)
     {
         if(name.size() > 128)
             emit errorDataReady("文件名长度超过128");
-        fileName = name;
+        int index = name.lastIndexOf('/');
+        fileName  = name.mid(index + 1);
     }
 
     void setFileBlockSize(quint32 size)

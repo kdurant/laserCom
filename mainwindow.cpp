@@ -3,16 +3,16 @@
 #include "ui_mainwindow.h"
 #include <QElapsedTimer>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    statusLabel(new QLabel()),
-    //    softwareVer("0.05"),
-    eventloop(new QEventLoop()),
-    tcpPort(17),
-    tcpClient(new QTcpSocket()),
-    tcpStatus(0),
-    testStatus(false)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent),
+      ui(new Ui::MainWindow),
+      statusLabel(new QLabel()),
+      //    softwareVer("0.05"),
+      eventloop(new QEventLoop()),
+      tcpPort(17),
+      tcpClient(new QTcpSocket()),
+      tcpStatus(0),
+      testStatus(false)
 {
     ui->setupUi(this);
 
@@ -42,13 +42,13 @@ void MainWindow::initParameter()
     {
         QFile file("./config.ini");
         file.open(QIODevice::WriteOnly);
-        file.write("[System]\n");
-        file.write("; release, debug, debug_network\n");
-        file.write("mode = debug_network\n\n");
-        file.write("[SendFile]\n");
-        file.write("; 1M= 1048576, 512K = 524288, 256K = 262144, 128K = 131072, 64K = 65536, 32K = 32768\n");
-        file.write("blockSize = 8192\n");
-        file.write("repeatNum = 3\n");
+        file.write("[System]\r\n");
+        file.write("; release, debug, debug_network\r\n");
+        file.write("mode = debug_network\r\n\r\n");
+        file.write("[SendFile]\r\n");
+        file.write("; 1M= 1048576, 512K = 524288, 256K = 262144, 128K = 131072, 64K = 65536, 32K = 32768\r\n");
+        file.write("blockSize = 8192\r\n");
+        file.write("repeatNum = 3\r\n");
         file.close();
     }
 
@@ -139,6 +139,8 @@ void MainWindow::initSignalSlot()
     connect(tcpClient, &QTcpSocket::readyRead, this, [this]() {
         QByteArray buffer;
         buffer = tcpClient->readAll();
+
+        qDebug() << "Tcp data size: " << buffer.size();
         dispatch->parserFrame(buffer);
 
         testStatus = true;
@@ -289,6 +291,7 @@ void MainWindow::initSignalSlot()
     connect(sendFlow, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
 
     connect(ui->btn_sendFile, &QPushButton::pressed, this, [this]() {
+        opStatus         = SEND_FILE;
         QString filePath = ui->lineEdit_sendFile->text();
         if(sysPara.mode == "debug_network")
             filePath = "ui_mainwindow.h";
@@ -314,14 +317,21 @@ void MainWindow::initSignalSlot()
         while(sendCnt < sysPara.repeatNum)
         {
             if(sendFlow->sendFileInfo())
+            {
+                qDebug() << "sendFileInfo() success:  " << sendCnt;
                 break;
+            }
             else
+            {
+                qDebug() << "sendFileInfo() failed:  " << sendCnt;
                 sendCnt++;
+            }
         }
         if(sendCnt == sysPara.repeatNum)
         {
-            ui->statusbar->showMessage("SET_FILE_INFO失败，请重新发送文件");
-            //            return;
+            ui->statusbar->showMessage("SET_FILE_INFO失败，请重新发送文件", 5);
+            qDebug() << "SET_FILE_INFO失败，请重新发送文件(不会发送文件内容)";
+            return;
         }
         // 2. 分割文件
         sendFlow->setFileBlockSize(sysPara.blockSize);
@@ -351,10 +361,13 @@ void MainWindow::initSignalSlot()
                 qDebug() << sendFlow->getBlockStatus(i) << "\t";
             }
             qDebug() << "----------";
-        }  // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
 
-        while(sendFlow->isSendAllBlock() == false &&
-              cycleCnt < sysPara.repeatNum);
+            Common::sleepWithoutBlock(100);
+        }
+        // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
+        while(sendFlow->isSendAllBlock() == false && cycleCnt < sysPara.repeatNum);
+
+        opStatus = IDLE;
     });
 
     connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
@@ -445,15 +458,15 @@ void MainWindow::timerEvent(QTimerEvent *event)
     QByteArray data;
     if(timer1s == event->timerId())
     {
-        //        if(tcpStatus == 0x01)
-        //        {
-        //            if(opStatus != SEND_FILE && opStatus != RECV_FILE)
-        //            {
-        //                heartBeatCnt++;
-        //                data.append("Heart:");
-        //                data.append(Common::int2ba(heartBeatCnt));
-        //                dispatch->encode(UserProtocol::HEART_BEAT, data);
-        //            }
-        //        }
+        if(tcpStatus == 0x01)
+        {
+            if(opStatus != SEND_FILE && opStatus != RECV_FILE)
+            {
+                heartBeatCnt++;
+                data.append("Heart:");
+                data.append(Common::int2ba(heartBeatCnt));
+                dispatch->encode(UserProtocol::HEART_BEAT, data);
+            }
+        }
     }
 }

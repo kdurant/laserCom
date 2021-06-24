@@ -97,7 +97,11 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
                     break;
 
                 // 1. 主机发送SET_FILE_DATA
-                // 2. detail as follow
+                // 2. 作为从机，收到主机发送的文件块数据
+                case UserProtocol::MasterSet::SET_FILE_DATA:
+                    emit slaveFileBlockReady(frame);
+                    break;
+
                 // 3. 作为主机，收到从机发送的RESPONSE_FILE_DATA
                 case UserProtocol::SlaveUp::RESPONSE_FILE_DATA:
                     transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);

@@ -50,6 +50,8 @@ void RecvFile::paserNewData(QByteArray &data)
     // 一个TCP包内发现了帧头和桢尾，几乎不可能
     if(headOffset >= 0 && tailOffset >= 0)
     {
+        fileBlockData = data.mid(headOffset, (tailOffset + 8) - headOffset);
+        processFileBlock(fileBlockData);
         state = IDLE;
         return;
     }

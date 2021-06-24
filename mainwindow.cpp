@@ -3,16 +3,16 @@
 #include "ui_mainwindow.h"
 #include <QElapsedTimer>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent),
-      ui(new Ui::MainWindow),
-      statusLabel(new QLabel()),
-      //    softwareVer("0.05"),
-      eventloop(new QEventLoop()),
-      tcpPort(17),
-      tcpClient(new QTcpSocket()),
-      tcpStatus(0),
-      testStatus(false)
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    statusLabel(new QLabel()),
+    //    softwareVer("0.05"),
+    eventloop(new QEventLoop()),
+    tcpPort(17),
+    tcpClient(new QTcpSocket()),
+    tcpStatus(0),
+    testStatus(false)
 {
     ui->setupUi(this);
 
@@ -140,7 +140,9 @@ void MainWindow::initSignalSlot()
         QByteArray buffer;
         buffer = tcpClient->readAll();
 
-        qDebug() << "Tcp data size: " << buffer.size();
+        if(buffer.size() > 180)
+            qDebug() << "Tcp data size: " << buffer.size();
+
         dispatch->parserFrame(buffer);
 
         testStatus = true;
@@ -190,6 +192,10 @@ void MainWindow::initSignalSlot()
     connect(dispatch, &ProtocolDispatch::frameDataReady, this, [this](QByteArray &data) {
         tcpClient->write(data);
     });
+
+    // connect(dispatch, &ProtocolDispatch::errorDataReady, this, [this](QByteArray &data) {
+    // qDebug() << data;
+    // });
 
     connect(dispatch, &ProtocolDispatch::heartBeatReady, this, [this](quint32 cnt) {
         ui->label_heartBeatCnt->setText("心跳包序号：" + QString::number(cnt));

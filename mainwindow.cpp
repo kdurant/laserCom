@@ -246,6 +246,8 @@ void MainWindow::initSignalSlot()
         if(recvFlow->isRecvAllBlock())
         {
             userFile.close();
+            if(recvFlow->getFileName().endsWith("PNG"))
+                ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
             qDebug() << "All file blocks are received!";
         }
     });

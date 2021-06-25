@@ -41,41 +41,5 @@ bool RecvFile::processFileBlock(QByteArray &data)
  */
 void RecvFile::paserNewData(QByteArray &data)
 {
-    QByteArray frame;
-    fileBlockData.append(data);
-    int headOffset = -1;
-    int tailOffset = -1;
-
-    headOffset = fileBlockData.indexOf(frameHead);
-    tailOffset = fileBlockData.indexOf(frameTail);
-
-    if(headOffset == -1 || tailOffset == -1)
-    {
-        // 文件块很大，一次TCP数据里没有帧头和帧尾
-        if(headOffset == -1 && tailOffset == -1)
-        {
-            // 等下一次进来数据再接着处理
-            return;
-        }
-        else if(headOffset == -1 && tailOffset > -1)
-        {  // 没有帧头，但有帧尾，说明帧头数据丢失
-            fileBlockData = fileBlockData.mid(tailOffset + 8);
-        }
-        else if(headOffset > -1 && tailOffset == -1)
-        {  // 文件块数据的开始
-            // 等下一次进来数据再接着处理
-            return;
-        }
-    }
-    else
-    {
-        if(headOffset == 0)
-        {
-            frame         = fileBlockData.mid(0, tailOffset + 8);
-            fileBlockData = fileBlockData.mid(tailOffset + 8);
-            processFileBlock(frame);
-        }
-        else
-            qDebug() << "会出现吗?";
-    }
+    processFileBlock(data);
 }

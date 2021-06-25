@@ -3,16 +3,16 @@
 #include "ui_mainwindow.h"
 #include <QElapsedTimer>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    statusLabel(new QLabel()),
-    //    softwareVer("0.05"),
-    eventloop(new QEventLoop()),
-    tcpPort(17),
-    tcpClient(new QTcpSocket()),
-    tcpStatus(0),
-    testStatus(false)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent),
+      ui(new Ui::MainWindow),
+      statusLabel(new QLabel()),
+      //    softwareVer("0.05"),
+      eventloop(new QEventLoop()),
+      tcpPort(17),
+      tcpClient(new QTcpSocket()),
+      tcpStatus(0),
+      testStatus(false)
 {
     ui->setupUi(this);
 
@@ -140,9 +140,6 @@ void MainWindow::initSignalSlot()
         QByteArray buffer;
         buffer = tcpClient->readAll();
 
-        if(buffer.size() > 180)
-            qDebug() << "Tcp data size: " << buffer.size();
-
         dispatch->parserFrame(buffer);
 
         testStatus = true;
@@ -236,6 +233,7 @@ void MainWindow::initSignalSlot()
         if(recvFlow->isRecvAllBlock())
         {
             userFile.close();
+            qDebug() << "All file blocks are received!";
         }
     });
     // 收到文件块数据，发送接收文件模块处理
@@ -348,7 +346,7 @@ void MainWindow::initSignalSlot()
         sendFlow->initBlockStatus();
         //dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[0]);
         int cycleCnt = 0;
-        do
+        //        do
         {
             for(int i = 0; i < fileBlockNumber; i++)
             {
@@ -371,7 +369,7 @@ void MainWindow::initSignalSlot()
             Common::sleepWithoutBlock(100);
         }
         // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
-        while(sendFlow->isSendAllBlock() == false && cycleCnt < sysPara.repeatNum);
+        //        while(sendFlow->isSendAllBlock() == false && cycleCnt < sysPara.repeatNum);
 
         opStatus = IDLE;
     });
@@ -464,11 +462,12 @@ void MainWindow::timerEvent(QTimerEvent *event)
     QByteArray data;
     if(timer1s == event->timerId())
     {
+        heartBeatCnt++;
         if(tcpStatus == 0x01)
         {
-            if(opStatus != SEND_FILE && opStatus != RECV_FILE)
+            //            if(opStatus != SEND_FILE && opStatus != RECV_FILE)
+            if(ui->checkBox_heartBeat->isChecked())
             {
-                heartBeatCnt++;
                 data.append("Heart:");
                 data.append(Common::int2ba(heartBeatCnt));
                 dispatch->encode(UserProtocol::HEART_BEAT, data);

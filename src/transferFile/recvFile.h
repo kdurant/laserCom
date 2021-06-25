@@ -30,8 +30,8 @@ private:
     QByteArray    fileBlockData;
 
 public:
-    RecvFile() :
-        fileSize(0), blockSize(0), isRecvNewData(false)
+    RecvFile()
+        : fileSize(0), blockSize(0), isRecvNewData(false)
     {
         quint8 head[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
         quint8 hail[] = {0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe};
@@ -57,6 +57,7 @@ public:
         blockSize = Common::ba2int(data.mid(data.lastIndexOf('?') + 1, 4));
 
         fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
+        blockStatus.clear();
         for(int i = 0; i < fileBlockNumber; i++)
             blockStatus.append(false);
     }

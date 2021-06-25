@@ -32,6 +32,7 @@ public:
 class ProtocolDispatch : public QObject
 {
     Q_OBJECT
+
 public:
     ProtocolDispatch()
     {
@@ -41,6 +42,7 @@ public:
     {
     }
     void parserFrame(QByteArray &data);
+    void processCommand(QByteArray &frame);
 
     static uint32_t getCommand(QByteArray &data)
     {
@@ -94,6 +96,7 @@ private:
     quint32          validDataLen;
     QVector<quint16> data;
     quint32          checksum;
+    QByteArray       frame;
 
     QString deviceVersion;
 };

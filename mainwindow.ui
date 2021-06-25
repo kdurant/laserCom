@@ -191,6 +191,13 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_heartBeat">
+            <property name="text">
+             <string>heartBeat</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>

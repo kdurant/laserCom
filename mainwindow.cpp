@@ -222,6 +222,7 @@ void MainWindow::initSignalSlot()
         {
             qDebug() << "成功创建" << recvFlow->getFileName();
         }
+        opStatus = RECV_FILE;
         dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
     });
 
@@ -248,6 +249,7 @@ void MainWindow::initSignalSlot()
             userFile.close();
             if(recvFlow->getFileName().endsWith("PNG"))
                 ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
+            opStatus = IDLE;
             qDebug() << "All file blocks are received!";
         }
     });
@@ -480,13 +482,14 @@ void MainWindow::timerEvent(QTimerEvent *event)
         heartBeatCnt++;
         if(tcpStatus == 0x01)
         {
-            //            if(opStatus != SEND_FILE && opStatus != RECV_FILE)
-            if(ui->checkBox_heartBeat->isChecked())
-            {
-                data.append("Heart:");
-                data.append(Common::int2ba(heartBeatCnt));
-                dispatch->encode(UserProtocol::HEART_BEAT, data);
-            }
+            if(ui->checkBox_heartBeat->isChecked() != true)
+                return;
+            if(opStatus != IDLE)
+                return;
+
+            data.append("Heart:");
+            data.append(Common::int2ba(heartBeatCnt));
+            dispatch->encode(UserProtocol::HEART_BEAT, data);
         }
     }
 }

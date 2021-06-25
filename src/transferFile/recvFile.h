@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include <QtCore>
+#include <QtMath>
 #include "common.h"
 #include "protocol.h"
 #include "ProtocolDispatch.h"

@@ -330,6 +330,7 @@ void MainWindow::initSignalSlot()
         sendFlow->setFileName(filePath);
 
         // 1. 发送文件信息
+        sendFlow->setFileBlockSize(sysPara.blockSize);
         quint8 sendCnt = 0;
         while(sendCnt < sysPara.repeatNum)
         {
@@ -351,7 +352,6 @@ void MainWindow::initSignalSlot()
             return;
         }
         // 2. 分割文件
-        sendFlow->setFileBlockSize(sysPara.blockSize);
         QVector<QByteArray> allFileBlock;
         int                 fileBlockNumber = sendFlow->splitData(allFileBlock);
 

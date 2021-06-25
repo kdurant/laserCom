@@ -3,16 +3,16 @@
 #include "ui_mainwindow.h"
 #include <QElapsedTimer>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent),
-      ui(new Ui::MainWindow),
-      statusLabel(new QLabel()),
-      //    softwareVer("0.05"),
-      eventloop(new QEventLoop()),
-      tcpPort(17),
-      tcpClient(new QTcpSocket()),
-      tcpStatus(0),
-      testStatus(false)
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    statusLabel(new QLabel()),
+    //    softwareVer("0.05"),
+    eventloop(new QEventLoop()),
+    tcpPort(17),
+    tcpClient(new QTcpSocket()),
+    tcpStatus(0),
+    testStatus(false)
 {
     ui->setupUi(this);
 
@@ -218,14 +218,27 @@ void MainWindow::initSignalSlot()
         {
             QMessageBox::critical(this, "错误", "创建文件失败");
         }
+        else
+        {
+            qDebug() << "成功创建" << recvFlow->getFileName();
+        }
         dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
     });
 
     connect(recvFlow, &RecvFile::fileBlockReady, this, [this](quint32 blockNo, quint32 validLen, QByteArray &recvData) {
+        // 接收端发送的响应由于TCP流的关系，接收方会延迟收到，导致已经正确的数据，重复发送
+        if(recvFlow->isRecvAllBlock())
+            return;
+
         qint64 offset = 0;
-        offset        = blockNo * validLen;
+
+        if(validLen != recvFlow->getBlockSize())
+            offset = blockNo * recvFlow->getBlockSize();
+        else
+            offset = blockNo * validLen;
         userFile.seek(offset);
         userFile.write(recvData);
+        recvFlow->setBlockStatus(blockNo);
 
         QByteArray frame = recvFlow->packResponse(blockNo, validLen);
         dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
@@ -346,30 +359,30 @@ void MainWindow::initSignalSlot()
         sendFlow->initBlockStatus();
         //dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[0]);
         int cycleCnt = 0;
-        //        do
+        do
         {
+            qDebug() << "send No. " << cycleCnt;
             for(int i = 0; i < fileBlockNumber; i++)
             {
                 if(sendFlow->getBlockStatus(i) == false)
                 {
                     dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+                    qDebug() << "sendFlow blockNo = " << i;
                     if(sysPara.mode == "debug_network")
                         Common::sleepWithoutBlock(300);
                 }
             }
             cycleCnt++;
-            Common::sleepWithoutBlock(10);  // 等待响应处理，更新sendFileBlockStatus状态
-            qDebug() << "send No. " << cycleCnt;
+            Common::sleepWithoutBlock(100);  // 等待响应处理，更新sendFileBlockStatus状态
             for(int i = 0; i < fileBlockNumber; i++)
             {
                 qDebug() << sendFlow->getBlockStatus(i) << "\t";
             }
             qDebug() << "----------";
 
-            Common::sleepWithoutBlock(100);
         }
         // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
-        //        while(sendFlow->isSendAllBlock() == false && cycleCnt < sysPara.repeatNum);
+        while(sendFlow->isSendAllBlock() == false && cycleCnt < sysPara.repeatNum);
 
         opStatus = IDLE;
     });

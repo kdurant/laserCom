@@ -16,12 +16,14 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
     QByteArray head = Common::QString2QByteArray(FrameHead);
     QByteArray tail = Common::QString2QByteArray(FrameTail);
     QByteArray command;
+    int        headOffset;
+    int        tailOffset;
 
-    int headOffset = -1;
-    int tailOffset = -1;
     frame.append(data);
-    qDebug() << "frame.size() = " << frame.size();
 
+start:
+    headOffset = -1;
+    tailOffset = -1;
     headOffset = frame.indexOf(head);
     tailOffset = frame.indexOf(tail);
     if(headOffset == -1 || tailOffset == -1)
@@ -46,6 +48,8 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
         command = frame.mid(headOffset, tailOffset + 8 - headOffset);
         processCommand(command);
         frame = frame.mid(tailOffset + 8);
+        if(frame.isEmpty() == false)
+            goto start;
     }
 }
 

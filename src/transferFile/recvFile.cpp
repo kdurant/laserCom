@@ -28,7 +28,7 @@ bool RecvFile::processFileBlock(QByteArray &data)
         quint32    validLen = Common::ba2int(fileBlock.mid(10, 4));
         QByteArray recvData = fileBlock.mid(15, validLen);
 
-        blockStatus[blockNo] = true;
+        //        blockStatus[blockNo] = true;
         emit fileBlockReady(blockNo, validLen, recvData);
     }
 

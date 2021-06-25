@@ -30,8 +30,8 @@ private:
     QByteArray    fileBlockData;
 
 public:
-    RecvFile()
-        : fileSize(0), blockSize(0), isRecvNewData(false)
+    RecvFile() :
+        fileSize(0), blockSize(0), isRecvNewData(false)
     {
         quint8 head[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
         quint8 hail[] = {0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe};
@@ -71,11 +71,16 @@ public:
         return blockSize;
     }
 
+    void setBlockStatus(int index)
+    {
+        blockStatus[index] = true;
+    }
     bool isRecvAllBlock(void)
     {
-        return std::all_of(blockStatus.begin(), blockStatus.end(), [](int i) {
+        bool status = std::all_of(blockStatus.begin(), blockStatus.end(), [](int i) {
             return i == true;
         });
+        return status;
     }
 
     QByteArray packResponse(int blockNo, int validLen)

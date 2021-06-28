@@ -98,6 +98,9 @@ public:
 
         frame.append(UserProtocol::SUCCESS);  // 4. 数据块接收成功
 
+        frame.append('?');
+        frame.append(1390, 0x33);
+
         return frame;
     }
 

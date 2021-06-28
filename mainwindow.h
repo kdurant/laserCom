@@ -62,8 +62,9 @@ private:
         QString mode;
         int     blockSize;
         int     repeatNum;
+        int     cycleIntervalTime;
     } sysPara{
-        "", "", 0, 3};
+        "", "", 8192, 3, 100};
 
     Ui::MainWindow *ui;
     QSettings *     configIni;

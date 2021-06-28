@@ -49,13 +49,15 @@ void MainWindow::initParameter()
         file.write("; 1M= 1048576, 512K = 524288, 256K = 262144, 128K = 131072, 64K = 65536, 32K = 32768\r\n");
         file.write("blockSize = 8192\r\n");
         file.write("repeatNum = 3\r\n");
+        file.write("cycleIntervalTime = 100\r\n");
         file.close();
     }
 
-    configIni         = new QSettings("./config.ini", QSettings::IniFormat);
-    sysPara.mode      = configIni->value("System/mode").toString();
-    sysPara.blockSize = configIni->value("SendFile/blockSize").toUInt();
-    sysPara.repeatNum = configIni->value("SendFile/repeatNum").toUInt();
+    configIni                 = new QSettings("./config.ini", QSettings::IniFormat);
+    sysPara.mode              = configIni->value("System/mode").toString();
+    sysPara.blockSize         = configIni->value("SendFile/blockSize").toUInt();
+    sysPara.repeatNum         = configIni->value("SendFile/repeatNum").toUInt();
+    sysPara.cycleIntervalTime = configIni->value("SendFile/cycleIntervalTime").toUInt();
 
     if(sysPara.mode == "debug_network")
         sysPara.pcIP = "127.0.0.1";
@@ -353,6 +355,7 @@ void MainWindow::initSignalSlot()
         {
             ui->statusbar->showMessage("SET_FILE_INFO失败，请重新发送文件", 5);
             qDebug() << "SET_FILE_INFO失败，请重新发送文件(不会发送文件内容)";
+            opStatus = IDLE;
             return;
         }
         // 2. 分割文件
@@ -377,7 +380,8 @@ void MainWindow::initSignalSlot()
                 }
             }
             cycleCnt++;
-            Common::sleepWithoutBlock(100);  // 等待响应处理，更新sendFileBlockStatus状态
+            if(sysPara.cycleIntervalTime != 0)
+                Common::sleepWithoutBlock(sysPara.cycleIntervalTime);  // 等待响应处理，更新sendFileBlockStatus状态
             for(int i = 0; i < fileBlockNumber; i++)
             {
                 qDebug() << sendFlow->getBlockStatus(i) << "\t";

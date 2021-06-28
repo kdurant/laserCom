@@ -48,6 +48,7 @@ start:
         command = frame.mid(headOffset, tailOffset + 8 - headOffset);
         processCommand(command);
         frame = frame.mid(tailOffset + 8);
+        //        qDebug() << ">>>>>>>>>>>>>>>>>>>>>>>>frame.size() = " << frame.size();
         if(frame.isEmpty() == false)
             goto start;
     }

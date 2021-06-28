@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     sendFlow = new SendFile();
     timer1s  = startTimer(1000);
     opStatus = IDLE;
+    tcpClient->setSocketOption(QAbstractSocket::LowDelayOption, 1);
 
     initParameter();
     initUI();

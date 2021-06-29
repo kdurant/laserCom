@@ -87,6 +87,7 @@ private:
     quint32           recvByteCnt{0};
     QFile             userFile;
     QVector<bool>     sendFileBlockStatus{false};
+    int               blockSuccessCnt{0};
 
     OpStatus opStatus;
 };

@@ -18,8 +18,8 @@ private:
     QVector<bool> blockStatus;
 
 public:
-    SendFile()
-        : fileName(""), blockSize(0)
+    SendFile() :
+        fileName(""), blockSize(0)
     {
     }
 
@@ -83,6 +83,11 @@ public:
         return std::all_of(blockStatus.begin(), blockStatus.end(), [](int i) {
             return i == true;
         });
+    }
+
+    int getBlockSuccessNumber(void)
+    {
+        return std::count(blockStatus.begin(), blockStatus.end(), true);
     }
 
 signals:

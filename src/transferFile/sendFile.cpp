@@ -45,7 +45,7 @@ int SendFile::splitData(QVector<QByteArray>& allFileBlock)
     QByteArray data;
     QFile      file(fileName);
     if(!file.exists())
-        return 0;
+        return -1;
     file.open(QIODevice::ReadOnly);
 
     fileSize                   = file.size();

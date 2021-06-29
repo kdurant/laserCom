@@ -230,9 +230,13 @@ void MainWindow::initSignalSlot()
     });
 
     connect(recvFlow, &RecvFile::fileBlockReady, this, [this](quint32 blockNo, quint32 validLen, QByteArray &recvData) {
+        qDebug() << "receive blockNo = " << blockNo;
         // 接收端发送的响应由于TCP流的关系，接收方会延迟收到，导致已经正确的数据，重复发送
-        if(recvFlow->isRecvAllBlock())
-            return;
+        //        if(recvFlow->isRecvAllBlock())
+        //        {
+        //            qDebug() << "All file blocks are received!";
+        //            return;
+        //        }
 
         qint64 offset = 0;
 
@@ -240,17 +244,21 @@ void MainWindow::initSignalSlot()
             offset = blockNo * recvFlow->getBlockSize();
         else
             offset = blockNo * validLen;
-        userFile.seek(offset);
-        userFile.write(recvData);
-        recvFlow->setBlockStatus(blockNo);
 
         QByteArray frame = recvFlow->packResponse(blockNo, validLen);
         dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
 
+        if(recvFlow->isRecvAllBlock() == false)
+        {
+            userFile.seek(offset);
+            userFile.write(recvData);
+            recvFlow->setBlockStatus(blockNo);
+        }
+
         if(recvFlow->isRecvAllBlock())
         {
             userFile.close();
-            if(recvFlow->getFileName().endsWith("PNG"))
+            if(recvFlow->getFileName().toLower().endsWith("png"))
                 ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
             opStatus = IDLE;
             qDebug() << "All file blocks are received!";
@@ -332,8 +340,6 @@ void MainWindow::initSignalSlot()
             return;
         }
 
-        ui->progressBar_sendFile->setMaximum(QFile(filePath).size());
-        ui->progressBar_sendFile->setValue(0);
         sendFlow->setFileName(filePath);
 
         // 1. 发送文件信息
@@ -362,6 +368,14 @@ void MainWindow::initSignalSlot()
         // 2. 分割文件
         QVector<QByteArray> allFileBlock;
         int                 fileBlockNumber = sendFlow->splitData(allFileBlock);
+        if(fileBlockNumber <= 0)
+        {
+            QMessageBox::warning(this, "warning", "请先选择文件");
+            return;
+        }
+
+        ui->progressBar_sendFile->setMaximum(fileBlockNumber);
+        ui->progressBar_sendFile->setValue(0);
 
         //3. 初始化 页 发送状态
         sendFlow->initBlockStatus();
@@ -375,18 +389,30 @@ void MainWindow::initSignalSlot()
                 if(sendFlow->getBlockStatus(i) == false)
                 {
                     dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+                    QCoreApplication::processEvents();
                     qDebug() << "sendFlow blockNo = " << i;
                     if(sysPara.mode == "debug_network")
                         Common::sleepWithoutBlock(300);
                 }
             }
             cycleCnt++;
+
+            qDebug() << "start to wait response";
             if(sysPara.cycleIntervalTime != 0)
-                Common::sleepWithoutBlock(sysPara.cycleIntervalTime);  // 等待响应处理，更新sendFileBlockStatus状态
-            for(int i = 0; i < fileBlockNumber; i++)
             {
-                qDebug() << sendFlow->getBlockStatus(i) << "\t";
+                QElapsedTimer time;
+                time.start();
+                while(time.elapsed() < sysPara.cycleIntervalTime)
+                {
+                    QCoreApplication::processEvents();
+                    ui->progressBar_sendFile->setValue(sendFlow->getBlockSuccessNumber() + 1);
+                    qDebug() << "sendFlow->getBlockSuccessNumber() = " << sendFlow->getBlockSuccessNumber();
+                }
             }
+
+            ui->progressBar_sendFile->setValue(sendFlow->getBlockSuccessNumber() + 1);
+            qDebug() << "sendFlow->getBlockSuccessNumber() = " << sendFlow->getBlockSuccessNumber();
+
             qDebug() << "----------";
 
         }

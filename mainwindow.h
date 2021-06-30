@@ -62,6 +62,7 @@ private:
         QString mode;
         int     blockSize;
         int     repeatNum;
+        int     blockIntervalTime;
         int     cycleIntervalTime;
     } sysPara{
         "", "", 8192, 3, 100};

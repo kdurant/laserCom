@@ -50,6 +50,8 @@ void MainWindow::initParameter()
         file.write("; 1M= 1048576, 512K = 524288, 256K = 262144, 128K = 131072, 64K = 65536, 32K = 32768\r\n");
         file.write("blockSize = 8192\r\n");
         file.write("repeatNum = 3\r\n");
+        file.write("; the interval time of sending block data\r\n");
+        file.write("blockIntervalTime = 5\r\n");
         file.write("cycleIntervalTime = 100\r\n");
         file.close();
     }
@@ -58,6 +60,7 @@ void MainWindow::initParameter()
     sysPara.mode              = configIni->value("System/mode").toString();
     sysPara.blockSize         = configIni->value("SendFile/blockSize").toUInt();
     sysPara.repeatNum         = configIni->value("SendFile/repeatNum").toUInt();
+    sysPara.blockIntervalTime = configIni->value("SendFile/blockIntervalTime").toUInt();
     sysPara.cycleIntervalTime = configIni->value("SendFile/cycleIntervalTime").toUInt();
 
     if(sysPara.mode == "debug_network")
@@ -142,7 +145,6 @@ void MainWindow::initSignalSlot()
     connect(tcpClient, &QTcpSocket::readyRead, this, [this]() {
         QByteArray buffer;
         buffer = tcpClient->readAll();
-
         dispatch->parserFrame(buffer);
 
         testStatus = true;
@@ -317,7 +319,7 @@ void MainWindow::initSignalSlot()
     connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
         int curretFileBlock = Common::ba2int(data.mid(5, 4));
         sendFlow->setBlockStatus(curretFileBlock, true);
-        qDebug() << "curretFileBlock is: " << curretFileBlock;
+        qDebug() << "receive blockNo is: " << curretFileBlock;
     });
 
     connect(sendFlow, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
@@ -389,7 +391,13 @@ void MainWindow::initSignalSlot()
                 if(sendFlow->getBlockStatus(i) == false)
                 {
                     dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
-                    QCoreApplication::processEvents();
+                    QElapsedTimer time;
+                    time.start();
+                    while(time.elapsed() < sysPara.blockIntervalTime)
+                    {
+                        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+                        ui->progressBar_sendFile->setValue(sendFlow->getBlockSuccessNumber());
+                    }
                     qDebug() << "sendFlow blockNo = " << i;
                     if(sysPara.mode == "debug_network")
                         Common::sleepWithoutBlock(300);
@@ -404,16 +412,15 @@ void MainWindow::initSignalSlot()
                 time.start();
                 while(time.elapsed() < sysPara.cycleIntervalTime)
                 {
-                    QCoreApplication::processEvents();
-                    ui->progressBar_sendFile->setValue(sendFlow->getBlockSuccessNumber() + 1);
-                    qDebug() << "sendFlow->getBlockSuccessNumber() = " << sendFlow->getBlockSuccessNumber();
+                    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+                    ui->progressBar_sendFile->setValue(sendFlow->getBlockSuccessNumber());
                 }
             }
 
-            ui->progressBar_sendFile->setValue(sendFlow->getBlockSuccessNumber() + 1);
             qDebug() << "sendFlow->getBlockSuccessNumber() = " << sendFlow->getBlockSuccessNumber();
+            ui->progressBar_sendFile->setValue(sendFlow->getBlockSuccessNumber());
 
-            qDebug() << "----------";
+            qDebug() << "-----------------------------------------------\r\n";
 
         }
         // 只要不是每个块都成功接受，就一直重发，最多重发5个循环

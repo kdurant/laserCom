@@ -307,11 +307,6 @@ void MainWindow::initSignalSlot()
         ui->lineEdit_sendFile->setText(filePath);
     });
 
-    connect(ui->btn_saveFile, &QPushButton::pressed, this, [this]() {
-        QString name = QFileDialog::getOpenFileName(this, tr(""), "", tr("*"));
-        ui->lineEdit_saveFileName->setText(name);
-    });
-
     /*
      发送端处理流程
      */
@@ -462,21 +457,6 @@ void MainWindow::initSignalSlot()
             }
             return;
         }
-    });
-
-    connect(ui->btn_startRecvFile, &QPushButton::pressed, this, [this]() {
-        if(ui->lineEdit_saveFileName->text().isEmpty())
-        {
-            QMessageBox::warning(this, "warning", "请设置文件名");
-            return;
-        }
-    });
-
-    connect(ui->btn_clearRecv, &QPushButton::pressed, this, [this]() {
-        ui->plainTextEdit_at->clear();
-        ui->progressBar_sendFile->setValue(0);
-        recvByteCnt = 0;
-        statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
     });
 }
 

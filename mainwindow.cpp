@@ -247,6 +247,7 @@ void MainWindow::initSignalSlot()
         else
             offset = blockNo * validLen;
 
+        // 因为发送方延迟接受，重发数据块时，依旧进行响应
         QByteArray frame = recvFlow->packResponse(blockNo, validLen);
         dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
 
@@ -259,9 +260,16 @@ void MainWindow::initSignalSlot()
 
         if(recvFlow->isRecvAllBlock())
         {
+            if(userFile.handle() == -1)
+                return;
+
             userFile.close();
             if(recvFlow->getFileName().toLower().endsWith("png"))
+            {
                 ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
+                ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
+                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ". 请打开图片界面查看");
+            }
             else if(recvFlow->getFileName().toLower().endsWith("chat"))
             {
                 QFile file(recvFlow->getFileName());
@@ -429,6 +437,8 @@ void MainWindow::initSignalSlot()
         }
         // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
         while(sendFlow->isSendAllBlock() == false && cycleCnt < sysPara.repeatNum);
+        ui->textEdit_recv->append("<font color=red>[Sender] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
+        ui->textEdit_recv->append(filePath);
 
         opStatus = IDLE;
     });
@@ -441,10 +451,7 @@ void MainWindow::initSignalSlot()
         file.write(ui->textEdit_send->toPlainText().toStdString().data());
         file.close();
 
-        QString current_time = QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss");
-
-        ui->textEdit_recv->append("<font color=red>[Sender] " + current_time + "</font>");
-
+        ui->textEdit_recv->append("<font color=red>[Sender] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
         ui->textEdit_recv->append(ui->textEdit_send->toPlainText());
 
         opStatus = SEND_FILE;

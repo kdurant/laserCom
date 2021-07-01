@@ -503,6 +503,7 @@ void MainWindow::initSignalSlot()
         // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
         while(sendFlow->isSendAllBlock() == false && cycleCnt < sysPara.repeatNum);
 
+        ui->textEdit_send->clear();
         opStatus = IDLE;
     });
 

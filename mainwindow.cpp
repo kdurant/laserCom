@@ -262,6 +262,15 @@ void MainWindow::initSignalSlot()
             userFile.close();
             if(recvFlow->getFileName().toLower().endsWith("png"))
                 ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
+            else if(recvFlow->getFileName().toLower().endsWith("png"))
+            {
+                QFile file(recvFlow->getFileName());
+                file.open(QIODevice::ReadOnly);
+
+                ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
+                ui->textEdit_recv->append(file.readAll());
+                file.close();
+            }
             opStatus = IDLE;
             qDebug() << "All file blocks are received!";
         }
@@ -417,6 +426,74 @@ void MainWindow::initSignalSlot()
 
             qDebug() << "-----------------------------------------------\r\n";
 
+        }
+        // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
+        while(sendFlow->isSendAllBlock() == false && cycleCnt < sysPara.repeatNum);
+
+        opStatus = IDLE;
+    });
+
+    connect(ui->btn_sendText, &QPushButton::pressed, this, [this]() {
+        if(ui->textEdit_send->toPlainText().length() == 0)
+            return;
+        QFile file("tmpFile.chat");
+        file.open(QIODevice::WriteOnly);
+        file.write(ui->textEdit_recv->toPlainText().toStdString().data());
+        file.close();
+
+        QString current_time = QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss");
+
+        ui->textEdit_recv->append("<font color=red>[Sender] " + current_time + "</font>");
+
+        ui->textEdit_recv->append(ui->textEdit_send->toPlainText());
+
+        return;
+
+        opStatus = SEND_FILE;
+        sendFlow->setFileName("tmpFile.chat");
+        sendFlow->setFileBlockSize(sysPara.blockSize);
+
+        quint8 sendCnt = 0;
+        while(sendCnt < sysPara.repeatNum)
+        {
+            if(sendFlow->sendFileInfo())
+                break;
+            sendCnt++;
+        }
+
+        if(sendCnt == sysPara.repeatNum)
+        {
+            ui->statusbar->showMessage("SET_FILE_INFO失败，请重新发送文件", 5);
+            qDebug() << "SET_FILE_INFO失败，请重新发送文件(不会发送文件内容)";
+            opStatus = IDLE;
+            return;
+        }
+        // 2. 分割文件
+        QVector<QByteArray> allFileBlock;
+        int                 fileBlockNumber = sendFlow->splitData(allFileBlock);
+        if(fileBlockNumber <= 0)
+        {
+            QMessageBox::warning(this, "warning", "请先选择文件");
+            return;
+        }
+
+        //3. 初始化 页 发送状态
+        sendFlow->initBlockStatus();
+        int cycleCnt = 0;
+        do
+        {
+            if(sendFlow->getBlockStatus(0) == false)
+            {
+                dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[0]);
+                QElapsedTimer time;
+                time.start();
+                while(time.elapsed() < sysPara.blockIntervalTime)
+                {
+                    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+                    ui->progressBar_sendFile->setValue(sendFlow->getBlockSuccessNumber());
+                }
+            }
+            cycleCnt++;
         }
         // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
         while(sendFlow->isSendAllBlock() == false && cycleCnt < sysPara.repeatNum);

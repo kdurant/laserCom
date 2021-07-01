@@ -15,10 +15,17 @@ bool SendFile::sendFileInfo(void)
 
     emit sendDataReady(UserProtocol::SET_FILE_INFO, frame);
 
-    QEventLoop waitLoop;  // 等待响应数据，或者1000ms超时
-    connect(this, &SendFile::responseDataReady, &waitLoop, &QEventLoop::quit);
-    QTimer::singleShot(1000, &waitLoop, &QEventLoop::quit);
-    waitLoop.exec();
+    // QEventLoop waitLoop;  // 等待响应数据，或者1000ms超时
+    // connect(this, &SendFile::responseDataReady, &waitLoop, &QEventLoop::quit);
+    // QTimer::singleShot(1000, &waitLoop, &QEventLoop::quit);
+    // waitLoop.exec();
+    QElapsedTimer time;
+    time.start();
+    while(time.elapsed() < 100)
+    {
+        QCoreApplication::processEvents();
+    }
+
     if(recvData.size() == 0)
         emit errorDataReady("SET_FILE_INFO:没有收到接收机响应");
     else

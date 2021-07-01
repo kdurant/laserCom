@@ -20,7 +20,6 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
     int        tailOffset;
 
     frame.append(data);
-
 start:
     headOffset = -1;
     tailOffset = -1;

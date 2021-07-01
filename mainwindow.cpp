@@ -264,13 +264,7 @@ void MainWindow::initSignalSlot()
                 return;
 
             userFile.close();
-            if(recvFlow->getFileName().toLower().endsWith("png"))
-            {
-                ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
-                ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
-                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ". 请打开图片界面查看");
-            }
-            else if(recvFlow->getFileName().toLower().endsWith("chat"))
+            if(recvFlow->getFileName().toLower().endsWith("chat"))
             {
                 QFile file(recvFlow->getFileName());
                 file.open(QIODevice::ReadOnly);
@@ -278,6 +272,17 @@ void MainWindow::initSignalSlot()
                 ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
                 ui->textEdit_recv->append(file.readAll());
                 file.close();
+            }
+            else if(recvFlow->getFileName().toLower().endsWith("png"))
+            {
+                ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
+                ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
+                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ". 请打开图片界面查看");
+            }
+            else
+            {
+                ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
+                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
             }
             opStatus = IDLE;
             qDebug() << "All file blocks are received!";

@@ -105,19 +105,15 @@
        <attribute name="title">
         <string>图片</string>
        </attribute>
-       <widget class="QLabel" name="label_recvFile">
-        <property name="geometry">
-         <rect>
-          <x>150</x>
-          <y>150</y>
-          <width>287</width>
-          <height>92</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <widget class="QLabel" name="label_recvFile">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="test">
        <attribute name="title">

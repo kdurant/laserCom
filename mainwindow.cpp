@@ -262,7 +262,7 @@ void MainWindow::initSignalSlot()
             userFile.close();
             if(recvFlow->getFileName().toLower().endsWith("png"))
                 ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
-            else if(recvFlow->getFileName().toLower().endsWith("png"))
+            else if(recvFlow->getFileName().toLower().endsWith("chat"))
             {
                 QFile file(recvFlow->getFileName());
                 file.open(QIODevice::ReadOnly);
@@ -438,7 +438,7 @@ void MainWindow::initSignalSlot()
             return;
         QFile file("tmpFile.chat");
         file.open(QIODevice::WriteOnly);
-        file.write(ui->textEdit_recv->toPlainText().toStdString().data());
+        file.write(ui->textEdit_send->toPlainText().toStdString().data());
         file.close();
 
         QString current_time = QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss");
@@ -446,8 +446,6 @@ void MainWindow::initSignalSlot()
         ui->textEdit_recv->append("<font color=red>[Sender] " + current_time + "</font>");
 
         ui->textEdit_recv->append(ui->textEdit_send->toPlainText());
-
-        return;
 
         opStatus = SEND_FILE;
         sendFlow->setFileName("tmpFile.chat");
@@ -487,7 +485,7 @@ void MainWindow::initSignalSlot()
                 dispatch->encode(UserProtocol::SET_FILE_DATA, allFileBlock[0]);
                 QElapsedTimer time;
                 time.start();
-                while(time.elapsed() < sysPara.blockIntervalTime)
+                while(time.elapsed() < sysPara.cycleIntervalTime)
                 {
                     QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
                     ui->progressBar_sendFile->setValue(sendFlow->getBlockSuccessNumber());

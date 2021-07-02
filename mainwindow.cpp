@@ -251,7 +251,7 @@ void MainWindow::initSignalSlot()
         QByteArray frame = recvFlow->packResponse(blockNo, validLen);
         dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
 
-        if(recvFlow->isRecvAllBlock() == false)
+        if(recvFlow->getBlockStatus(blockNo) == false)
         {
             userFile.seek(offset);
             userFile.write(recvData);

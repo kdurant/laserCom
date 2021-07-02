@@ -76,6 +76,11 @@ public:
     {
         blockStatus[index] = true;
     }
+
+    bool getBlockStatus(int index)
+    {
+        return blockStatus[index];
+    }
     bool isRecvAllBlock(void)
     {
         bool status = std::all_of(blockStatus.begin(), blockStatus.end(), [](int i) {

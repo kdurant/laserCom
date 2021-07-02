@@ -512,39 +512,44 @@ void MainWindow::initSignalSlot()
         opStatus = IDLE;
     });
 
-    connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
-        testStatus = false;
-    });
-
     connect(ui->btn_sendTest, &QPushButton::pressed, this, [this]() {
         if(tcpStatus == 0x00)
         {
             QMessageBox::warning(this, "warning", "请检查TCP是否连接");
             return;
         }
-        testStatus = true;
 
-        QByteArray data(1446, 0);
-        for(int i = 0; i < data.size(); i++)
-        {
-            uint8_t pad = static_cast<uint8_t>(i / 238) + 0x31;
-            data[i]     = pad;
-        }
-        qint64 sendCnt = 0;
-
-        int number = ui->lineEdit_testFrameNumber->text().toInt();
+        QByteArray data    = QByteArray(1411, 0x11);
+        int        number  = ui->lineEdit_testFrameNumber->text().toInt();
+        int        sendCnt = 0;
         if(number != 0)
         {
             for(int i = 0; i < number; i++)
             {
-                tcpClient->write(data);
-                sendCnt += data.size();
+                dispatch->encode(UserProtocol::SET_TEST_PATTERN, data);
+                sendCnt += 1446;
                 ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
                                            QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
                                            QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
             }
             return;
         }
+        testStatus = true;
+        while(true)
+        {
+            if(!testStatus)
+                break;
+            dispatch->encode(UserProtocol::SET_TEST_PATTERN, data);
+            sendCnt += 1446;
+            ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
+                                       QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
+                                       QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
+            Common::sleepWithoutBlock(5);
+        }
+    });
+
+    connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
+        testStatus = false;
     });
 }
 

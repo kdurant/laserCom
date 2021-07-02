@@ -12,8 +12,9 @@ class UserProtocol
 public:
     enum MasterSet
     {
-        SET_FILE_INFO = 0x20,
-        SET_FILE_DATA = 0x30,
+        SET_FILE_INFO    = 0x20,
+        SET_FILE_DATA    = 0x30,
+        SET_TEST_PATTERN = 0x40,
     };
 
     enum SlaveUp

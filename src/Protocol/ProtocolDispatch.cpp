@@ -78,6 +78,9 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
             emit heartBeatReady(Common::ba2int(transmitFrame));
             break;
 
+        case UserProtocol::MasterSet::SET_TEST_PATTERN:
+            break;
+
         // 1. 主机发送SET_FILE_INFO
         // 2. 作为从机，收到主机发送的SET_FILE_INFO命令
         case UserProtocol::MasterSet::SET_FILE_INFO:
@@ -125,6 +128,13 @@ void ProtocolDispatch::encode(qint32 command, QByteArray &data)
             frame.append(UserProtocol::HEART_BEAT);  // command
             tmp = Common::int2ba(data.size());
             frame.append(tmp);
+            frame.append(data);
+            break;
+
+        case UserProtocol::SET_TEST_PATTERN:
+            frame.append(UserProtocol::SLAVE_DEV);         // source addr
+            frame.append(UserProtocol::MASTER_DEV);        // destination addr
+            frame.append(UserProtocol::SET_TEST_PATTERN);  // command
             frame.append(data);
             break;
 

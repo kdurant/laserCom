@@ -43,7 +43,14 @@
            <string>发送</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_2">
-           <item row="1" column="1">
+           <item row="5" column="2">
+            <widget class="QPushButton" name="btn_audioSend">
+             <property name="text">
+              <string>发送</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
             <widget class="QPushButton" name="btn_sendText">
              <property name="text">
               <string>发送</string>
@@ -53,37 +60,21 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QLineEdit" name="lineEdit_sendFile">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
+           <item row="2" column="2">
             <widget class="QPushButton" name="btn_selectFile">
              <property name="text">
-              <string>打开文件</string>
+              <string>选择文件</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
-            <widget class="QProgressBar" name="progressBar_sendFile">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="value">
-              <number>24</number>
+           <item row="5" column="1">
+            <widget class="QPushButton" name="btn_audioStop">
+             <property name="text">
+              <string>停止</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="1">
+           <item row="3" column="2">
             <widget class="QPushButton" name="btn_sendFile">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -96,8 +87,38 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="0" colspan="2">
+           <item row="5" column="0">
+            <widget class="QPushButton" name="btn_audioStart">
+             <property name="text">
+              <string>录音</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="3">
             <widget class="QTextEdit" name="textEdit_send"/>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="QProgressBar" name="progressBar_sendFile">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="value">
+              <number>24</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QLineEdit" name="lineEdit_sendFile">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>

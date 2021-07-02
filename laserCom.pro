@@ -1,5 +1,8 @@
 QT       += core gui
 QT       += network
+QT       += multimedia
+QT       += multimediawidgets
+
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -21,6 +24,7 @@ SOURCES += \
     mainwindow.cpp \
     src/Protocol/ProtocolDispatch.cpp \
     src/at/at.cpp \
+    src/media/AudioRecord.cpp \
     src/transferFile/recvFile.cpp \
     src/transferFile/sendFile.cpp
 
@@ -30,6 +34,7 @@ HEADERS += \
     src/Protocol/protocol.h \
     src/at/at.h \
     src/common.h \
+    src/media/AudioRecord.h \
     src/transferFile/recvFile.h \
     src/transferFile/sendFile.h
 
@@ -37,6 +42,7 @@ INCLUDEPATH += ./src/
 INCLUDEPATH += ./src/at/
 INCLUDEPATH += ./src/transferFile/
 INCLUDEPATH += ./src/Protocol/
+INCLUDEPATH += ./src/media
 
 VERSION = 0.26
 DEFINES += SOFT_VERSION=\"\\\"$$VERSION\\\"\"

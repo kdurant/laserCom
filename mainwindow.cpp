@@ -23,6 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
     opStatus = IDLE;
     tcpClient->setSocketOption(QAbstractSocket::LowDelayOption, 1);
 
+    audioRecord = new AudioRecord();
+
     initParameter();
     initUI();
     initSignalSlot();
@@ -550,6 +552,16 @@ void MainWindow::initSignalSlot()
 
     connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
         testStatus = false;
+    });
+
+    connect(ui->btn_audioStart, &QPushButton::pressed, this, [this]() {
+        ui->btn_audioStart->setEnabled(false);
+        audioRecord->configSaveAudio();
+        audioRecord->record();
+    });
+    connect(ui->btn_audioStop, &QPushButton::pressed, this, [this]() {
+        audioRecord->stop();
+        ui->btn_audioStart->setEnabled(true);
     });
 }
 

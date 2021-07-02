@@ -20,6 +20,7 @@
 #include "ProtocolDispatch.h"
 #include "sendFile.h"
 #include "recvFile.h"
+#include "AudioRecord.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -91,5 +92,7 @@ private:
     int               blockSuccessCnt{0};
 
     OpStatus opStatus;
+
+    AudioRecord *audioRecord;
 };
 #endif  // MAINWINDOW_H

@@ -66,6 +66,9 @@ int SendFile::splitData(QVector<QByteArray>& allFileBlock)
 
     while(!file.atEnd())
     {
+        frame.append(fileName.toLatin1());
+        frame.append('?');
+
         frame.append(Common::int2ba(fileBlockNumber));  // 1.文件被划分成文件块的总个数（4Byte）
         frame.append('?');
 

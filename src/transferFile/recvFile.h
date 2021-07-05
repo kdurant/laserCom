@@ -19,17 +19,6 @@
 class RecvFile : public QObject
 {
     Q_OBJECT
-private:
-    QString       fileName;
-    int           fileSize;
-    int           fileBlockNumber;  // 文件块的数量
-    int           blockSize;
-    QVector<bool> blockStatus;
-    bool          isRecvNewData;  // 是否收到数据
-    QByteArray    frameHead;
-    QByteArray    frameTail;
-    QByteArray    fileBlockData;
-
 public:
     RecvFile() :
         fileSize(0), blockSize(0), isRecvNewData(false)
@@ -39,6 +28,15 @@ public:
 
         frameHead = QByteArray((char *)head, 8);
         frameTail = QByteArray((char *)hail, 8);
+    };
+
+    struct FileInfo
+    {
+        QString       fileName;
+        int           fileSize;
+        int           fileBlockNumber;  // 文件块的数量
+        int           blockSize;
+        QVector<bool> blockStatus;
     };
 
     enum RecvState
@@ -53,7 +51,8 @@ public:
 
     void setFileInfo(QByteArray &data)
     {
-        fileName  = data.mid(0, data.indexOf('?'));
+        fileName = data.mid(0, data.indexOf('?'));
+
         fileSize  = Common::ba2int(data.mid(data.indexOf('?') + 1, 4));
         blockSize = Common::ba2int(data.mid(data.lastIndexOf('?') + 1, 4));
 
@@ -61,6 +60,13 @@ public:
         blockStatus.clear();
         for(int i = 0; i < fileBlockNumber; i++)
             blockStatus.append(false);
+
+        //        file[fileName].fileName        = fileName;
+        //        file[fileName].fileSize        = fileSize;
+        //        file[fileName].fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
+        //        file[fileName].blockStatus.clear();
+        //        for(int i = 0; i < file[fileName].fileBlockNumber; i++)
+        //            file[fileName].blockStatus.append(false);
     }
     QString getFileName(void)
     {
@@ -92,6 +98,10 @@ public:
     QByteArray packResponse(int blockNo, int validLen)
     {
         QByteArray frame;
+
+        frame.append(fileName.toLatin1());
+        frame.append('?');
+
         frame.append(Common::int2ba(fileBlockNumber));  // 1.文件被划分成文件块的总个数（4Byte）
         frame.append('?');
 
@@ -113,10 +123,23 @@ public:
 
 signals:
     void errorFileBlockReady(void);
-    void fileBlockReady(quint32 blockNo, quint32 validLen, QByteArray &recvData);  // 收到正确的数据块信息
+    void fileBlockReady(QString fileName, quint32 blockNo, quint32 validLen, QByteArray &recvData);  // 收到正确的数据块信息
     void errorDataReady(QString &data);
 
 public slots:
     void paserNewData(QByteArray &data);
+
+private:
+    QString       fileName;
+    int           fileSize;
+    int           fileBlockNumber;  // 文件块的数量
+    int           blockSize;
+    QVector<bool> blockStatus;
+    bool          isRecvNewData;  // 是否收到数据
+    QByteArray    frameHead;
+    QByteArray    frameTail;
+    QByteArray    fileBlockData;
+
+    QMap<QString, FileInfo> file;
 };
 #endif

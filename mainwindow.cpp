@@ -233,7 +233,7 @@ void MainWindow::initSignalSlot()
         dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
     });
 
-    connect(recvFlow, &RecvFile::fileBlockReady, this, [this](quint32 blockNo, quint32 validLen, QByteArray &recvData) {
+    connect(recvFlow, &RecvFile::fileBlockReady, this, [this](QString fileName, quint32 blockNo, quint32 validLen, QByteArray &recvData) {
         qDebug() << "receive blockNo = " << blockNo;
         // 接收端发送的响应由于TCP流的关系，接收方会延迟收到，导致已经正确的数据，重复发送
         //        if(recvFlow->isRecvAllBlock())
@@ -336,7 +336,9 @@ void MainWindow::initSignalSlot()
      */
     connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFlow, &SendFile::setNewData);
     connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
-        int curretFileBlock = Common::ba2int(data.mid(5, 4));
+        int offset = data.indexOf('?');
+        offset++;
+        int curretFileBlock = Common::ba2int(data.mid(offset + 5, 4));
         sendFlow->setBlockStatus(curretFileBlock, true);
         qDebug() << "receive blockNo is: " << curretFileBlock;
     });

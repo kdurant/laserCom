@@ -244,23 +244,23 @@ void MainWindow::initSignalSlot()
 
         qint64 offset = 0;
 
-        if(validLen != recvFlow->getBlockSize())
-            offset = blockNo * recvFlow->getBlockSize();
+        if(validLen != recvFlow->getBlockSize(fileName))
+            offset = blockNo * recvFlow->getBlockSize(fileName);
         else
             offset = blockNo * validLen;
 
         // 因为发送方延迟接受，重发数据块时，依旧进行响应
-        QByteArray frame = recvFlow->packResponse(blockNo, validLen);
+        QByteArray frame = recvFlow->packResponse(fileName, blockNo, validLen);
         dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
 
-        if(recvFlow->getBlockStatus(blockNo) == false)
+        if(recvFlow->getBlockStatus(fileName, blockNo) == false)
         {
             userFile.seek(offset);
             userFile.write(recvData);
-            recvFlow->setBlockStatus(blockNo);
+            recvFlow->setBlockStatus(fileName, blockNo);
         }
 
-        if(recvFlow->isRecvAllBlock())
+        if(recvFlow->isRecvAllBlock(fileName))
         {
             if(userFile.handle() == -1)
                 return;

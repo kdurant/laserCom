@@ -21,7 +21,7 @@ class RecvFile : public QObject
     Q_OBJECT
 public:
     RecvFile() :
-        fileSize(0), blockSize(0), isRecvNewData(false)
+        isRecvNewData(false)
     {
         quint8 head[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef};
         quint8 hail[] = {0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe};
@@ -53,56 +53,52 @@ public:
     {
         fileName = data.mid(0, data.indexOf('?'));
 
-        fileSize  = Common::ba2int(data.mid(data.indexOf('?') + 1, 4));
-        blockSize = Common::ba2int(data.mid(data.lastIndexOf('?') + 1, 4));
+        int fileSize  = Common::ba2int(data.mid(data.indexOf('?') + 1, 4));
+        int blockSize = Common::ba2int(data.mid(data.lastIndexOf('?') + 1, 4));
 
-        fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
-        blockStatus.clear();
-        for(int i = 0; i < fileBlockNumber; i++)
-            blockStatus.append(false);
-
-        //        file[fileName].fileName        = fileName;
-        //        file[fileName].fileSize        = fileSize;
-        //        file[fileName].fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
-        //        file[fileName].blockStatus.clear();
-        //        for(int i = 0; i < file[fileName].fileBlockNumber; i++)
-        //            file[fileName].blockStatus.append(false);
+        recvList[fileName].fileName        = fileName;
+        recvList[fileName].fileSize        = fileSize;
+        recvList[fileName].blockSize       = blockSize;
+        recvList[fileName].fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
+        recvList[fileName].blockStatus.clear();
+        for(int i = 0; i < recvList[fileName].fileBlockNumber; i++)
+            recvList[fileName].blockStatus.append(false);
     }
     QString getFileName(void)
     {
         return fileName;
     }
 
-    quint32 getBlockSize(void)
+    quint32 getBlockSize(QString name)
     {
-        return blockSize;
+        return recvList[name].blockSize;
     }
 
-    void setBlockStatus(int index)
+    void setBlockStatus(QString name, int index)
     {
-        blockStatus[index] = true;
+        recvList[name].blockStatus[index] = true;
     }
 
-    bool getBlockStatus(int index)
+    bool getBlockStatus(QString name, int index)
     {
-        return blockStatus[index];
+        return recvList[name].blockStatus[index];
     }
-    bool isRecvAllBlock(void)
+    bool isRecvAllBlock(QString name)
     {
-        bool status = std::all_of(blockStatus.begin(), blockStatus.end(), [](int i) {
+        bool status = std::all_of(recvList[name].blockStatus.begin(), recvList[name].blockStatus.end(), [](int i) {
             return i == true;
         });
         return status;
     }
 
-    QByteArray packResponse(int blockNo, int validLen)
+    QByteArray packResponse(QString name, int blockNo, int validLen)
     {
         QByteArray frame;
 
-        frame.append(fileName.toLatin1());
+        frame.append(name.toLatin1());
         frame.append('?');
 
-        frame.append(Common::int2ba(fileBlockNumber));  // 1.文件被划分成文件块的总个数（4Byte）
+        frame.append(Common::int2ba(recvList[name].fileBlockNumber));  // 1.文件被划分成文件块的总个数（4Byte）
         frame.append('?');
 
         frame.append(Common::int2ba(blockNo));  // 2.当前传输的文件块序号，从0开始（4Byte）
@@ -130,16 +126,12 @@ public slots:
     void paserNewData(QByteArray &data);
 
 private:
-    QString       fileName;
-    int           fileSize;
-    int           fileBlockNumber;  // 文件块的数量
-    int           blockSize;
-    QVector<bool> blockStatus;
-    bool          isRecvNewData;  // 是否收到数据
-    QByteArray    frameHead;
-    QByteArray    frameTail;
-    QByteArray    fileBlockData;
+    QString    fileName;
+    bool       isRecvNewData;  // 是否收到数据
+    QByteArray frameHead;
+    QByteArray frameTail;
+    QByteArray fileBlockData;
 
-    QMap<QString, FileInfo> file;
+    QMap<QString, FileInfo> recvList;
 };
 #endif

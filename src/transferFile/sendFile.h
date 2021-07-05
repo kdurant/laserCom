@@ -56,7 +56,7 @@ public:
 
     bool sendFileBlock(QByteArray &fileBlock);
 
-    bool send(void);
+    bool send(int blockInterval, int fileInterval, int repeatNum);
 
     void initBlockStatus(void)
     {
@@ -93,6 +93,7 @@ public:
 signals:
     void sendDataReady(qint32 command, QByteArray &data);  // 需要发送的数据已经准备好
     void responseDataReady(void);                          // 接收到响应数据
+    void successBlockNumber(int number);
     void errorDataReady(QString error);
 
 public slots:

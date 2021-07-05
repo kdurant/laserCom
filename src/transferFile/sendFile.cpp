@@ -86,11 +86,86 @@ int SendFile::splitData(QVector<QByteArray>& allFileBlock)
     return fileBlockNumber;
 }
 
-bool SendFile::send(void)
+/**
+ * @brief 发送文件，流程如下
+ * 1.         sendFlow->setFileName(filePath);
+ * 2.         sendFlow->setFileBlockSize(sysPara.blockSize);
+
+ * @param blockInterval
+ * @param fileInterval
+ * @param repeatNum
+ * @return
+ */
+bool SendFile::send(int blockInterval, int fileInterval, int repeatNum)
 {
-    QByteArray frame;
-    QEventLoop waitLoop;
-    QTimer::singleShot(100, &waitLoop, &QEventLoop::quit);
+    int sendCnt = 0;
+
+    // 1. 发送文件信息
+    while(sendCnt < repeatNum)
+    {
+        if(sendFileInfo())
+        {
+            qDebug() << "sendFileInfo() success:  " << sendCnt;
+            break;
+        }
+        else
+        {
+            qDebug() << "sendFileInfo() failed:  " << sendCnt;
+            sendCnt++;
+        }
+    }
+    if(sendCnt == repeatNum)
+    {
+        return false;
+    }
+
+    // 2. 分割文件
+    QVector<QByteArray> allFileBlock;
+    int                 fileBlockNumber = splitData(allFileBlock);
+    if(fileBlockNumber <= 0)
+    {
+        return false;
+    }
+    initBlockStatus();
+
+    sendCnt = 0;
+    do
+    {
+        qDebug() << "send No. " << sendCnt;
+        for(int i = 0; i < fileBlockNumber; i++)
+        {
+            if(getBlockStatus(i) == false)
+            {
+                emit          sendDataReady(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+                QElapsedTimer time;
+                time.start();
+                while(time.elapsed() < blockInterval)
+                {
+                    QCoreApplication::processEvents();
+                }
+                emit successBlockNumber(getBlockSuccessNumber());
+                qDebug() << "sendFlow blockNo = " << i;
+            }
+        }
+        sendCnt++;
+
+        qDebug() << "start to wait response";
+        if(fileInterval != 0)
+        {
+            QElapsedTimer time;
+            time.start();
+            while(time.elapsed() < fileInterval)
+            {
+                QCoreApplication::processEvents();
+            }
+        }
+
+        qDebug() << "sendFlow->getBlockSuccessNumber() = " << getBlockSuccessNumber();
+        emit successBlockNumber(getBlockSuccessNumber());
+
+    }
+    // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
+    while(isSendAllBlock() == false && sendCnt < repeatNum);
 
     return true;
 }

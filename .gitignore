@@ -1,8 +1,6 @@
 #basic
 .vscode
 *.pdf
-*.doc
-*.docx
 *.rar
 *.txt
 *.html

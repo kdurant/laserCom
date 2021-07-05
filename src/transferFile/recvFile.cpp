@@ -11,6 +11,7 @@ bool RecvFile::processFileBlock(QByteArray &data)
     QByteArray head = Common::QString2QByteArray(FrameHead);
     QByteArray tail = Common::QString2QByteArray(FrameTail);
 
+    int offset = 0;
     if(data.startsWith(head) && data.endsWith(tail))
     {
         quint32    len        = data.size();
@@ -23,13 +24,17 @@ bool RecvFile::processFileBlock(QByteArray &data)
         }
 
         QByteArray fileBlock = ProtocolDispatch::getData(data);
-        //        quint32    blockTotal = Common::ba2int(fileBlock.mid(0, 4));
-        quint32    blockNo  = Common::ba2int(fileBlock.mid(5, 4));
-        quint32    validLen = Common::ba2int(fileBlock.mid(10, 4));
-        QByteArray recvData = fileBlock.mid(15, validLen);
+
+        offset = fileBlock.indexOf('?');
+
+        QString fileName = fileBlock.mid(0, offset);
+        offset++;
+        quint32    blockNo  = Common::ba2int(fileBlock.mid(offset + 5, 4));
+        quint32    validLen = Common::ba2int(fileBlock.mid(offset + 10, 4));
+        QByteArray recvData = fileBlock.mid(offset + 15, validLen);
 
         //        blockStatus[blockNo] = true;
-        emit fileBlockReady(blockNo, validLen, recvData);
+        emit fileBlockReady(fileName, blockNo, validLen, recvData);
     }
 
     return true;

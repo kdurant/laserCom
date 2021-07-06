@@ -337,7 +337,7 @@ void MainWindow::initSignalSlot()
     connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFlow, &SendFile::setNewData);
     connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
         int     offset = data.indexOf('?');
-        QString name   = data.mid(0, offset - 1);
+        QString name   = data.mid(0, offset);
         offset++;
         int curretFileBlock = Common::ba2int(data.mid(offset + 5, 4));
         sendFlow->setBlockStatus(name, curretFileBlock, true);

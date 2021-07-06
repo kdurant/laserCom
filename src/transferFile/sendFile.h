@@ -48,7 +48,7 @@ public:
      * @brief sendFileInfo, 从接收机发送0x20命令
      * @return
      */
-    bool sendFileInfo(QString name);
+    bool sendFileInfo(QString name, int repeatNum);
 
     /**
      * @brief splitData, 将文件分割成指定大小的页，并按照格式打包

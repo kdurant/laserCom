@@ -1,7 +1,9 @@
 #include "sendFile.h"
 
-bool SendFile::sendFileInfo(QString name)
+bool SendFile::sendFileInfo(QString name, int repeatNum)
 {
+    int sendCnt = 0;
+
     QByteArray frame;
     frame.append(name.toLatin1());
     frame.append('?');
@@ -13,12 +15,9 @@ bool SendFile::sendFileInfo(QString name)
 
     frame.append(Common::int2ba(sendList[name].blockSize));
 
+send_frame:
     emit sendDataReady(UserProtocol::SET_FILE_INFO, frame);
 
-    // QEventLoop waitLoop;  // 等待响应数据，或者1000ms超时
-    // connect(this, &SendFile::responseDataReady, &waitLoop, &QEventLoop::quit);
-    // QTimer::singleShot(1000, &waitLoop, &QEventLoop::quit);
-    // waitLoop.exec();
     QElapsedTimer time;
     time.start();
     while(time.elapsed() < 100)
@@ -31,10 +30,17 @@ bool SendFile::sendFileInfo(QString name)
     else
     {
         if(frame == recvData)
+        {
+            qDebug() << "sendFileInfo() success:  " << sendCnt;
             return true;
+        }
         else
             emit errorDataReady("SET_FILE_INFO:收到的接收机响应不正确");
     }
+    qDebug() << "sendFileInfo() failed:  " << sendCnt;
+
+    if(++sendCnt < repeatNum)
+        goto send_frame;
 
     return false;
 }
@@ -102,26 +108,10 @@ int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
  */
 bool SendFile::send(QString name, int blockInterval, int fileInterval, int repeatNum)
 {
-    int sendCnt = 0;
-
-    // 1. 发送文件信息
-    while(sendCnt < repeatNum)
-    {
-        if(sendFileInfo(name))
-        {
-            qDebug() << "sendFileInfo() success:  " << sendCnt;
-            break;
-        }
-        else
-        {
-            qDebug() << "sendFileInfo() failed:  " << sendCnt;
-            sendCnt++;
-        }
-    }
-    if(sendCnt == repeatNum)
-    {
+    if(sendFileInfo(name, repeatNum) == false)
         return false;
-    }
+
+    int sendCnt = 0;
 
     // 2. 分割文件
     QVector<QByteArray> allFileBlock;

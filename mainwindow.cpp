@@ -336,10 +336,11 @@ void MainWindow::initSignalSlot()
      */
     connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFlow, &SendFile::setNewData);
     connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
-        int offset = data.indexOf('?');
+        int     offset = data.indexOf('?');
+        QString name   = data.mid(0, offset - 1);
         offset++;
         int curretFileBlock = Common::ba2int(data.mid(offset + 5, 4));
-        sendFlow->setBlockStatus(curretFileBlock, true);
+        sendFlow->setBlockStatus(name, curretFileBlock, true);
         qDebug() << "receive blockNo is: " << curretFileBlock;
     });
 
@@ -364,8 +365,8 @@ void MainWindow::initSignalSlot()
         }
 
         sendFlow->setFileName(filePath);
-        sendFlow->setFileBlockSize(sysPara.blockSize);
-        if(sendFlow->send(sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum) == false)
+        sendFlow->setFileBlockSize(filePath, sysPara.blockSize);
+        if(sendFlow->send(filePath, sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum) == false)
             QMessageBox::warning(this, "warning", "发送文件失败");
 
         ui->textEdit_recv->append("<font color=red>[Sender] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
@@ -387,9 +388,9 @@ void MainWindow::initSignalSlot()
 
         opStatus = SEND_FILE;
         sendFlow->setFileName("tmpFile.chat");
-        sendFlow->setFileBlockSize(sysPara.blockSize);
+        sendFlow->setFileBlockSize("tmpFile.chat", sysPara.blockSize);
 
-        if(sendFlow->send(sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum) == false)
+        if(sendFlow->send("tmpFile.chat", sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum) == false)
             QMessageBox::warning(this, "warning", "信息文件失败");
 
         ui->textEdit_send->clear();

@@ -1,17 +1,17 @@
 #include "sendFile.h"
 
-bool SendFile::sendFileInfo(void)
+bool SendFile::sendFileInfo(QString name)
 {
     QByteArray frame;
-    frame.append(fileName.toLatin1());
+    frame.append(name.toLatin1());
     frame.append('?');
 
-    QFile   file(fileName);
+    QFile   file(name);
     quint32 size = file.size();
     frame.append(Common::int2ba(size));
     frame.append('?');
 
-    frame.append(Common::int2ba(blockSize));
+    frame.append(Common::int2ba(sendList[name].blockSize));
 
     emit sendDataReady(UserProtocol::SET_FILE_INFO, frame);
 
@@ -47,35 +47,35 @@ bool SendFile::sendFileInfo(void)
  * 3.当前传输文件块有效字节数（4Byte）
  * 4.文件块具体内容
  */
-int SendFile::splitData(QVector<QByteArray>& allFileBlock)
+int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
 {
     QByteArray data;
-    QFile      file(fileName);
+    QFile      file(name);
     if(!file.exists())
         return -1;
     file.open(QIODevice::ReadOnly);
 
-    fileSize                   = file.size();
-    fileBlockNumber            = qCeil(fileSize / (qreal)blockSize);
-    quint32    curretFileBlock = 0;
-    quint32    validLen        = 0;
-    char*      buffer          = new char[blockSize];
+    sendList[name].fileSize        = file.size();
+    sendList[name].fileBlockNumber = qCeil(sendList[name].fileSize / (qreal)sendList[name].blockSize);
+    quint32    curretFileBlock     = 0;
+    quint32    validLen            = 0;
+    char*      buffer              = new char[sendList[name].blockSize];
     QByteArray blockData;
     QByteArray frame;
     QByteArray tmp;
 
     while(!file.atEnd())
     {
-        frame.append(fileName.toLatin1());
+        frame.append(name.toLatin1());
         frame.append('?');
 
-        frame.append(Common::int2ba(fileBlockNumber));  // 1.文件被划分成文件块的总个数（4Byte）
+        frame.append(Common::int2ba(sendList[name].fileBlockNumber));  // 1.文件被划分成文件块的总个数（4Byte）
         frame.append('?');
 
         frame.append(Common::int2ba(curretFileBlock));  // 2.当前传输的文件块序号，从0开始（4Byte）
         frame.append('?');
 
-        validLen = file.read(buffer, blockSize);
+        validLen = file.read(buffer, sendList[name].blockSize);
         frame.append(Common::int2ba(validLen));  // 3.当前传输文件块有效字节数（4Byte）
         frame.append('?');
 
@@ -86,7 +86,8 @@ int SendFile::splitData(QVector<QByteArray>& allFileBlock)
         frame.clear();
         curretFileBlock++;
     }
-    return fileBlockNumber;
+    delete[] buffer;
+    return sendList[name].fileBlockNumber;
 }
 
 /**
@@ -99,14 +100,14 @@ int SendFile::splitData(QVector<QByteArray>& allFileBlock)
  * @param repeatNum
  * @return
  */
-bool SendFile::send(int blockInterval, int fileInterval, int repeatNum)
+bool SendFile::send(QString name, int blockInterval, int fileInterval, int repeatNum)
 {
     int sendCnt = 0;
 
     // 1. 发送文件信息
     while(sendCnt < repeatNum)
     {
-        if(sendFileInfo())
+        if(sendFileInfo(name))
         {
             qDebug() << "sendFileInfo() success:  " << sendCnt;
             break;
@@ -124,12 +125,12 @@ bool SendFile::send(int blockInterval, int fileInterval, int repeatNum)
 
     // 2. 分割文件
     QVector<QByteArray> allFileBlock;
-    int                 fileBlockNumber = splitData(allFileBlock);
+    int                 fileBlockNumber = splitData(name, allFileBlock);
     if(fileBlockNumber <= 0)
     {
         return false;
     }
-    initBlockStatus();
+    initBlockStatus(name);
 
     sendCnt = 0;
     do
@@ -137,7 +138,7 @@ bool SendFile::send(int blockInterval, int fileInterval, int repeatNum)
         qDebug() << "send No. " << sendCnt;
         for(int i = 0; i < fileBlockNumber; i++)
         {
-            if(getBlockStatus(i) == false)
+            if(getBlockStatus(name, i) == false)
             {
                 emit          sendDataReady(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
                 QElapsedTimer time;
@@ -146,7 +147,7 @@ bool SendFile::send(int blockInterval, int fileInterval, int repeatNum)
                 {
                     QCoreApplication::processEvents();
                 }
-                emit successBlockNumber(getBlockSuccessNumber());
+                emit successBlockNumber(getBlockSuccessNumber(name));
                 qDebug() << "sendFlow blockNo = " << i;
             }
         }
@@ -163,12 +164,12 @@ bool SendFile::send(int blockInterval, int fileInterval, int repeatNum)
             }
         }
 
-        qDebug() << "sendFlow->getBlockSuccessNumber() = " << getBlockSuccessNumber();
-        emit successBlockNumber(getBlockSuccessNumber());
+        qDebug() << "sendFlow->getBlockSuccessNumber() = " << getBlockSuccessNumber(name);
+        emit successBlockNumber(getBlockSuccessNumber(name));
 
     }
     // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
-    while(isSendAllBlock() == false && sendCnt < repeatNum);
+    while(isSendAllBlock(name) == false && sendCnt < repeatNum);
 
     return true;
 }

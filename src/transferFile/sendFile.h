@@ -9,19 +9,20 @@
 class SendFile : public QObject
 {
     Q_OBJECT
-private:
-    QString       fileName;
-    quint32       fileSize;
-    quint32       blockSize;
-    quint32       fileBlockNumber;
-    QByteArray    recvData;
-    QVector<bool> blockStatus;
 
 public:
-    SendFile() :
-        fileName(""), blockSize(0)
+    SendFile()
     {
     }
+
+    struct FileInfo
+    {
+        QString       fileName;
+        int           fileSize;
+        int           fileBlockNumber;  // 文件块的数量
+        int           blockSize;
+        QVector<bool> blockStatus;
+    };
 
     /**
      * @brief setFileName
@@ -32,63 +33,69 @@ public:
     {
         if(name.size() > 128)
             emit errorDataReady("文件名长度超过128");
-        int index = name.lastIndexOf('/');
-        fileName  = name.mid(index + 1);
+        int     index    = name.lastIndexOf('/');
+        QString fileName = name.mid(index + 1);
+
+        sendList[fileName].fileName = fileName;
     }
 
-    void setFileBlockSize(quint32 size)
+    void setFileBlockSize(QString name, quint32 size)
     {
-        blockSize = size;
+        sendList[name].blockSize = size;
     }
 
     /**
      * @brief sendFileInfo, 从接收机发送0x20命令
      * @return
      */
-    bool sendFileInfo(void);
+    bool sendFileInfo(QString name);
 
     /**
      * @brief splitData, 将文件分割成指定大小的页，并按照格式打包
      * @param allFileBlock
      * @return 文件被分割的页数
      */
-    int splitData(QVector<QByteArray> &allFileBlock);
+    int splitData(QString name, QVector<QByteArray> &allFileBlock);
 
     bool sendFileBlock(QByteArray &fileBlock);
 
-    bool send(int blockInterval, int fileInterval, int repeatNum);
+    bool send(QString name, int blockInterval, int fileInterval, int repeatNum);
 
-    void initBlockStatus(void)
+    void initBlockStatus(QString name)
     {
-        blockStatus.clear();
+        sendList[name].blockStatus.clear();
 
-        for(int i = 0; i < fileBlockNumber; i++)
-            blockStatus.append(false);
+        for(int i = 0; i < sendList[name].fileBlockNumber; i++)
+            sendList[name].blockStatus.append(false);
     }
 
-    void setBlockStatus(int i, bool status)
+    void setBlockStatus(QString name, int i, bool status)
     {
-        if(i > blockStatus.size())
+        if(i > sendList[name].blockStatus.size())
             return;
-        blockStatus[i] = status;
+        sendList[name].blockStatus[i] = status;
     }
-    bool getBlockStatus(int i)
+    bool getBlockStatus(QString name, int i)
     {
-        if(i > blockStatus.size())
+        if(i > sendList[name].blockStatus.size())
             return false;
-        return blockStatus[i];
+        return sendList[name].blockStatus[i];
     }
-    bool isSendAllBlock(void)
+    bool isSendAllBlock(QString name)
     {
-        return std::all_of(blockStatus.begin(), blockStatus.end(), [](int i) {
+        return std::all_of(sendList[name].blockStatus.begin(), sendList[name].blockStatus.end(), [](int i) {
             return i == true;
         });
     }
 
-    int getBlockSuccessNumber(void)
+    int getBlockSuccessNumber(QString name)
     {
-        return std::count(blockStatus.begin(), blockStatus.end(), true);
+        return std::count(sendList[name].blockStatus.begin(), sendList[name].blockStatus.end(), true);
     }
+
+private:
+    QByteArray              recvData;
+    QMap<QString, FileInfo> sendList;
 
 signals:
     void sendDataReady(qint32 command, QByteArray &data);  // 需要发送的数据已经准备好

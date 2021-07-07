@@ -24,13 +24,17 @@ MainWindow::MainWindow(QWidget *parent) :
     tcpClient->setSocketOption(QAbstractSocket::LowDelayOption, 1);
 
     audioRecord = new AudioRecord();
+    player      = new QMediaPlayer();
+    playlist    = new QMediaPlaylist();
+    playlist->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
+    player->setPlaylist(playlist);
 
     initParameter();
     initUI();
     initSignalSlot();
     userStatusBar();
 
-    ui->label_changeLog->setText(CHANGELOG);
+    //    ui->label_changeLog->setText(CHANGELOG);
 }
 
 MainWindow::~MainWindow()
@@ -235,7 +239,7 @@ void MainWindow::initSignalSlot()
 
     connect(recvFlow, &RecvFile::fileBlockReady, this, [this](QString fileName, quint32 blockNo, quint32 validLen, QByteArray &recvData) {
         qDebug() << "receive blockNo = " << blockNo;
-        // 接收端发送的响应由于TCP流的关系，接收方会延迟收到，导致已经正确的数据，重复发送
+        // 接收端发送的响应由于TCP流的关系，发送方会延迟收到，导致已经正确的数据，重复发送
         //        if(recvFlow->isRecvAllBlock())
         //        {
         //            qDebug() << "All file blocks are received!";
@@ -266,24 +270,31 @@ void MainWindow::initSignalSlot()
                 return;
 
             userFile.close();
+
+            ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
             if(recvFlow->getFileName().toLower().endsWith("chat"))
             {
                 QFile file(recvFlow->getFileName());
                 file.open(QIODevice::ReadOnly);
 
-                ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
                 ui->textEdit_recv->append(file.readAll());
                 file.close();
             }
             else if(recvFlow->getFileName().toLower().endsWith("png"))
             {
                 ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
-                ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
                 ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ". 请打开图片界面查看");
+            }
+
+            else if(recvFlow->getFileName().toLower().endsWith("wav"))
+            {
+                playlist->clear();
+                playlist->addMedia(QUrl::fromLocalFile(recvFlow->getFileName()));
+                player->play();
+                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
             }
             else
             {
-                ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
                 ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
             }
             opStatus = IDLE;
@@ -445,6 +456,10 @@ void MainWindow::initSignalSlot()
     connect(ui->btn_audioStop, &QPushButton::pressed, this, [this]() {
         audioRecord->stop();
         ui->btn_audioStart->setEnabled(true);
+    });
+
+    connect(ui->btn_audioPlay, &QPushButton::pressed, this, [this]() {
+        player->play();
     });
 }
 

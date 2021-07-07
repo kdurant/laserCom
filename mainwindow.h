@@ -14,6 +14,9 @@
 #include <QFile>
 #include <QCryptographicHash>
 
+#include <QMediaPlayer>
+#include <QMediaPlaylist>
+
 #include "at.h"
 #include "common.h"
 #include "protocol.h"
@@ -94,5 +97,8 @@ private:
     OpStatus opStatus;
 
     AudioRecord *audioRecord;
+
+    QMediaPlayer *  player;    //播放器
+    QMediaPlaylist *playlist;  //播放列表
 };
 #endif  // MAINWINDOW_H

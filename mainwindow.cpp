@@ -299,10 +299,10 @@ void MainWindow::initSignalSlot()
 
             else if(recvFlow->getFileName().toLower().endsWith("wav"))
             {
+                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
                 playlist->clear();
                 playlist->addMedia(QUrl::fromLocalFile(recvFlow->getFileName()));
                 player->play();
-                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
             }
             else
             {

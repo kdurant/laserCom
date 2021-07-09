@@ -135,7 +135,7 @@ bool SendFile::send(QString name, int blockInterval, int fileInterval, int repea
                 time.start();
                 while(time.elapsed() < blockInterval)
                 {
-                    QCoreApplication::processEvents();
+                    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
                 }
                 emit successBlockNumber(getBlockSuccessNumber(name));
                 qDebug() << "sendFlow blockNo = " << i;
@@ -150,7 +150,7 @@ bool SendFile::send(QString name, int blockInterval, int fileInterval, int repea
             time.start();
             while(time.elapsed() < fileInterval)
             {
-                QCoreApplication::processEvents();
+                QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
             }
         }
 

@@ -17,6 +17,11 @@
 #include <QMediaPlayer>
 #include <QMediaPlaylist>
 
+#include <QCamera>
+#include <QCameraImageCapture>
+#include <QCameraViewfinder>
+#include <QCameraViewfinderSettings>
+
 #include "at.h"
 #include "common.h"
 #include "protocol.h"
@@ -100,5 +105,10 @@ private:
 
     QMediaPlayer *  player;    //播放器
     QMediaPlaylist *playlist;  //播放列表
+
+    QCamera *            camera;              //系统摄像设备
+    QCameraViewfinder *  cameraViewfinder;    //摄像机取景器部件
+    QCameraImageCapture *cameraImageCapture;  //截图
+    QTimer *             cameraTimer;
 };
 #endif  // MAINWINDOW_H

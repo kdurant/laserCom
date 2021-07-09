@@ -29,6 +29,17 @@ MainWindow::MainWindow(QWidget *parent) :
     playlist->setPlaybackMode(QMediaPlaylist::CurrentItemOnce);
     player->setPlaylist(playlist);
 
+    cameraViewfinder = new QCameraViewfinder();
+    ui->hlayout->addWidget(cameraViewfinder);
+
+    camera = new QCamera();
+    camera->setCaptureMode(QCamera::CaptureStillImage);
+    camera->setViewfinder(cameraViewfinder);
+
+    cameraImageCapture = new QCameraImageCapture(camera);
+    cameraImageCapture->setCaptureDestination(QCameraImageCapture::CaptureToFile);
+    cameraTimer = new QTimer();
+
     initParameter();
     initUI();
     initSignalSlot();
@@ -460,6 +471,47 @@ void MainWindow::initSignalSlot()
 
     connect(ui->btn_audioPlay, &QPushButton::pressed, this, [this]() {
         player->play();
+    });
+
+    //********************视频相关操作*************************************
+    connect(ui->btn_cameraOpen, &QPushButton::pressed, this, [this]() {
+        camera->start();
+        QList<QCameraViewfinderSettings> ViewSets = camera->supportedViewfinderSettings();
+        int                              i        = 0;
+        qDebug() << "viewfinderResolutions sizes.len = " << ViewSets.length();
+
+        for(i = 0; i < ViewSets.length(); i++)
+        {
+            if(ViewSets[i].resolution() == QSize(640, 480))
+                break;
+        }
+        camera->setViewfinderSettings(ViewSets[i--]);
+    });
+
+    connect(ui->btn_cameraClose, &QPushButton::pressed, this, [this]() {
+        camera->stop();
+    });
+
+    connect(ui->btn_capturePic, &QPushButton::pressed, this, [this]() {
+        cameraImageCapture->capture(QCoreApplication::applicationDirPath() + "/abcde");
+    });
+
+    connect(ui->btn_cameraOpenVideo, &QPushButton::pressed, this, [this]() {
+        cameraTimer->start(300);
+    });
+
+    connect(ui->btn_cameraCloseVideo, &QPushButton::pressed, this, [this]() {
+        cameraTimer->stop();
+    });
+
+    connect(cameraTimer, &QTimer::timeout, this, [this]() {
+        cameraImageCapture->capture(QCoreApplication::applicationDirPath() + "/tmpVedio");
+        opStatus = SEND_FILE;
+        sendFlow->setFileName("tmpVedio.jpg");
+        sendFlow->setFileBlockSize("tmpVedio.jpg", sysPara.blockSize);
+
+        sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum);
+        opStatus = IDLE;
     });
 }
 

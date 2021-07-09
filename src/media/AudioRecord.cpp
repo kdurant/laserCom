@@ -1,16 +1,18 @@
 #include "AudioRecord.h"
 
-int AudioRecord::configSaveAudio(void)
+QString AudioRecord::configSaveAudio(void)
 {
     if(recorder->audioInputs().length() <= 0)
-        return -1;
+        return "";
     recorder->setAudioInput(recorder->audioInputs().first());  //设置录入设备
 
     QString path = QDir::currentPath();
-    path += "/backup/";
+    path += "/";
     path += QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss") + ".wav";
-    //    QString path = "abcd.wav";
     recorder->setOutputLocation(QUrl::fromLocalFile(path));  //设置输出文件
+
+    //    QString path = "abcd.wav";
+    recorder->setOutputLocation(QUrl::fromLocalFile(path));
 
     QAudioEncoderSettings settings;                                         //音频编码设置
     settings.setCodec(recorder->supportedAudioCodecs().first());            //编码
@@ -20,7 +22,7 @@ int AudioRecord::configSaveAudio(void)
     settings.setQuality(QMultimedia::EncodingQuality(1));                   //品质
     recorder->setAudioSettings(settings);                                   //音频设置
 
-    return 0;
+    return path;
 }
 
 void AudioRecord::record()

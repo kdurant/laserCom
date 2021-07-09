@@ -19,7 +19,7 @@ public:
     {
     }
 
-    int configSaveAudio(void);
+    QString configSaveAudio(void);
 
 public slots:
     void record(void);

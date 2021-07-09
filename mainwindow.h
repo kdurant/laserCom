@@ -105,6 +105,7 @@ private:
 
     QMediaPlayer *  player;    //播放器
     QMediaPlaylist *playlist;  //播放列表
+    QString         currentAudioFile;
 
     QCamera *            camera;              //系统摄像设备
     QCameraViewfinder *  cameraViewfinder;    //摄像机取景器部件

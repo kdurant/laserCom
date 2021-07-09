@@ -385,6 +385,7 @@ void MainWindow::initSignalSlot()
             QMessageBox::warning(this, "warning", "请检查TCP是否连接");
             return;
         }
+        filePath = Common::getFileNameFromFullPath(filePath);
 
         sendFlow->setFileName(filePath);
         sendFlow->setFileBlockSize(filePath, sysPara.blockSize);
@@ -459,14 +460,27 @@ void MainWindow::initSignalSlot()
         testStatus = false;
     });
 
+    //********************语音相关操作*************************************
     connect(ui->btn_audioStart, &QPushButton::pressed, this, [this]() {
         ui->btn_audioStart->setEnabled(false);
-        audioRecord->configSaveAudio();
+        currentAudioFile = audioRecord->configSaveAudio();
         audioRecord->record();
     });
     connect(ui->btn_audioStop, &QPushButton::pressed, this, [this]() {
         audioRecord->stop();
         ui->btn_audioStart->setEnabled(true);
+    });
+
+    connect(ui->btn_audioSend, &QPushButton::pressed, this, [this]() {
+        int     index    = currentAudioFile.lastIndexOf('/');
+        QString fileName = currentAudioFile.mid(index + 1);
+
+        opStatus = SEND_FILE;
+        sendFlow->setFileName(fileName);
+        sendFlow->setFileBlockSize(fileName, sysPara.blockSize);
+
+        sendFlow->send(fileName, sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum);
+        opStatus = IDLE;
     });
 
     connect(ui->btn_audioPlay, &QPushButton::pressed, this, [this]() {

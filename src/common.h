@@ -315,6 +315,13 @@ public:
     {
         return QByteArray::fromHex(QByteArray::fromStdString(s.toStdString()));
     }
+
+    static QString getFileNameFromFullPath(QString name)
+    {
+        int     index    = name.lastIndexOf('/');
+        QString fileName = name.mid(index + 1);
+        return fileName;
+    }
 };
 
 #endif  // COMMON_H

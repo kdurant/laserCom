@@ -155,6 +155,9 @@ void MainWindow::initUI()
             ui->comboBox_setup->setToolTip(at.setupCommand[1].hint);
         }
     });
+
+    QDir().mkpath("cache/master");
+    QDir().mkpath("cache/slave");
 }
 
 void MainWindow::initSignalSlot()
@@ -235,7 +238,7 @@ void MainWindow::initSignalSlot()
     // 收到正确的文件信息，立刻响应发送端
     connect(dispatch, &ProtocolDispatch::slaveFileInfoReady, this, [this](QByteArray &data) {
         recvFlow->setFileInfo(data);
-        userFile.setFileName(recvFlow->getFileName());
+        userFile.setFileName("cache/slave/" + recvFlow->getFileName());
         if(!userFile.open(QIODevice::WriteOnly))
         {
             QMessageBox::critical(this, "错误", "创建文件失败");
@@ -286,36 +289,38 @@ void MainWindow::initSignalSlot()
             userFile.close();
 
             ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
-            if(recvFlow->getFileName().toLower().endsWith("chat"))
+
+            QString path = "cache/slave/" + recvFlow->getFileName();
+            if(path.toLower().endsWith("chat"))
             {
-                QFile file(recvFlow->getFileName());
+                QFile file(path);
                 file.open(QIODevice::ReadOnly);
 
                 ui->textEdit_recv->append(file.readAll());
                 file.close();
             }
-            else if(recvFlow->getFileName().toLower().endsWith("png"))
+            else if(path.toLower().endsWith("png"))
             {
-                ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
+                ui->label_recvFile->setPixmap(QPixmap(path));
                 ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ". 请打开图片界面查看");
             }
 
-            else if(recvFlow->getFileName().toLower().endsWith("jpg"))
+            else if(path.toLower().endsWith("jpg"))
             {
                 ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
-                ui->label_vedioShow->setPixmap(QPixmap(recvFlow->getFileName()));
+                ui->label_vedioShow->setPixmap(QPixmap(path));
             }
 
-            else if(recvFlow->getFileName().toLower().endsWith("wav"))
+            else if(path.toLower().endsWith("wav"))
             {
-                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
+                ui->textEdit_recv->append("received file: " + path + ".");
                 playlist->clear();
                 playlist->addMedia(QUrl::fromLocalFile(recvFlow->getFileName()));
                 player->play();
             }
             else
             {
-                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
+                ui->textEdit_recv->append("received file: " + path + ".");
             }
             opStatus = IDLE;
             qDebug() << "All file blocks are received!";

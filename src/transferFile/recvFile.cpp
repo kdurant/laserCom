@@ -46,5 +46,7 @@ bool RecvFile::processFileBlock(QByteArray &data)
  */
 void RecvFile::paserNewData(QByteArray &data)
 {
+    qDebug() << "Record time before processFileBlock()";
     processFileBlock(data);
+    qDebug() << "Record time after processFileBlock()";
 }

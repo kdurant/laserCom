@@ -19,6 +19,8 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
     int        headOffset;
     int        tailOffset;
 
+    qDebug() << "received data from tcp socked, length = " << data.size();
+
     frame.append(data);
 start:
     headOffset = -1;
@@ -45,7 +47,9 @@ start:
     else
     {
         command = frame.mid(headOffset, tailOffset + 8 - headOffset);
+        qDebug() << "Record time before processCommand()";
         processCommand(command);
+        qDebug() << "Record time after processCommand()";
         frame = frame.mid(tailOffset + 8);
         //        qDebug() << ">>>>>>>>>>>>>>>>>>>>>>>>frame.size() = " << frame.size();
         if(frame.isEmpty() == false)

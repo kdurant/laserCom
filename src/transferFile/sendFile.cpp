@@ -18,12 +18,17 @@ bool SendFile::sendFileInfo(QString name, int repeatNum)
 send_frame:
     emit sendDataReady(UserProtocol::SET_FILE_INFO, frame);
 
-    QElapsedTimer time;
-    time.start();
-    while(time.elapsed() < 100)
-    {
-        QCoreApplication::processEvents();
-    }
+    QEventLoop waitLoop;  // 等待响应数据，或者1000ms超时
+    connect(this, &SendFile::responseDataReady, &waitLoop, &QEventLoop::quit);
+    QTimer::singleShot(100, &waitLoop, &QEventLoop::quit);
+    waitLoop.exec();
+
+    // QElapsedTimer time;
+    // time.start();
+    // while(time.elapsed() < 100)
+    // {
+    // QCoreApplication::processEvents();
+    // }
 
     if(recvData.size() == 0)
         emit errorDataReady("SET_FILE_INFO:没有收到接收机响应");
@@ -108,8 +113,10 @@ int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
  */
 bool SendFile::send(QString name, int blockInterval, int fileInterval, int repeatNum)
 {
+    qDebug() << ">>>>>>>>>>>>>>>the end of sending info";
     if(sendFileInfo(name, repeatNum) == false)
         return false;
+    qDebug() << ">>>>>>>>>>>>>>>the end of sending info";
 
     int sendCnt = 0;
 
@@ -122,44 +129,32 @@ bool SendFile::send(QString name, int blockInterval, int fileInterval, int repea
     }
     initBlockStatus(name);
 
+    qDebug() << "---------------the start of sending file";
     sendCnt = 0;
-    do
+    for(int i = 0, sendCnt = 0; i < fileBlockNumber && sendCnt < repeatNum; i++)
     {
-        qDebug() << "send No. " << sendCnt;
-        for(int i = 0; i < fileBlockNumber; i++)
+        if(getBlockStatus(name, i) == false)
         {
-            if(getBlockStatus(name, i) == false)
-            {
-                emit          sendDataReady(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
-                QElapsedTimer time;
-                time.start();
-                while(time.elapsed() < blockInterval)
-                {
-                    QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-                }
-                emit successBlockNumber(getBlockSuccessNumber(name));
-                qDebug() << "sendFlow blockNo = " << i;
-            }
-        }
-        sendCnt++;
-
-        qDebug() << "start to wait response";
-        if(fileInterval != 0)
-        {
+            qDebug() << "sendCnt =  " << sendCnt << "; i = " << i;
+            emit          sendDataReady(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
             QElapsedTimer time;
             time.start();
-            while(time.elapsed() < fileInterval)
+            while(time.elapsed() < blockInterval)
             {
                 QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
             }
+            emit successBlockNumber(getBlockSuccessNumber(name));
         }
-
-        qDebug() << "sendFlow->getBlockSuccessNumber() = " << getBlockSuccessNumber(name);
-        emit successBlockNumber(getBlockSuccessNumber(name));
-
+        if(isSendAllBlock(name))
+            break;
+        if(i == fileBlockNumber - 1)
+        {
+            qDebug() << "sendCnt++";
+            i = 0;
+            sendCnt++;
+        }
     }
-    // 只要不是每个块都成功接受，就一直重发，最多重发5个循环
-    while(isSendAllBlock(name) == false && sendCnt < repeatNum);
+    qDebug() << "---------------the end of sending file";
 
     return true;
 }

@@ -17,7 +17,7 @@ public:
 
     struct FileInfo
     {
-        QString       fileName;
+        QString       storePath;
         int           fileSize;
         int           fileBlockNumber;  // 文件块的数量
         int           blockSize;
@@ -27,7 +27,7 @@ public:
     /**
      * @brief setFileName
      * 需要去掉文件信息中的路径，只保留文件名
-     * @param name
+     * @param name, 需要文件全名，包括路径
      */
     void setFileName(QString const &name)
     {
@@ -36,9 +36,14 @@ public:
         int     index    = name.lastIndexOf('/');
         QString fileName = name.mid(index + 1);
 
-        sendList[fileName].fileName = fileName;
+        sendList[fileName].storePath = name;
     }
 
+    /**
+     * @brief setFileBlockSize
+     * @param name, 只需要文件名
+     * @param size
+     */
     void setFileBlockSize(QString name, quint32 size)
     {
         sendList[name].blockSize = size;

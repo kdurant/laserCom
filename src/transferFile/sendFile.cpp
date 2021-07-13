@@ -8,7 +8,7 @@ bool SendFile::sendFileInfo(QString name, int repeatNum)
     frame.append(name.toLatin1());
     frame.append('?');
 
-    QFile   file(name);
+    QFile   file(sendList[name].storePath);
     quint32 size = file.size();
     frame.append(Common::int2ba(size));
     frame.append('?');
@@ -61,7 +61,7 @@ send_frame:
 int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
 {
     QByteArray data;
-    QFile      file(name);
+    QFile      file(sendList[name].storePath);
     if(!file.exists())
         return -1;
     file.open(QIODevice::ReadOnly);
@@ -105,7 +105,8 @@ int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
  * @brief 发送文件，流程如下
  * 1.         sendFlow->setFileName(filePath);
  * 2.         sendFlow->setFileBlockSize(sysPara.blockSize);
-
+ *
+ * @param name, 这里只需要指定文件名，不需要全部路径
  * @param blockInterval
  * @param repeatNum
  * @return
@@ -127,6 +128,7 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum)
     int                 fileBlockNumber = splitData(name, allFileBlock);
     if(fileBlockNumber <= 0)
     {
+        qDebug() << "fileBlockNumber = -1";
         return false;
     }
     initBlockStatus(name);

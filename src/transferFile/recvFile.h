@@ -32,7 +32,7 @@ public:
 
     struct FileInfo
     {
-        QString       fileName;
+        QString       storePath;  // 文件实际路径
         int           fileSize;
         int           fileBlockNumber;  // 文件块的数量
         int           blockSize;
@@ -56,7 +56,7 @@ public:
         int fileSize  = Common::ba2int(data.mid(data.indexOf('?') + 1, 4));
         int blockSize = Common::ba2int(data.mid(data.lastIndexOf('?') + 1, 4));
 
-        recvList[fileName].fileName        = fileName;
+        recvList[fileName].storePath       = "cache/slave/" + fileName;
         recvList[fileName].fileSize        = fileSize;
         recvList[fileName].blockSize       = blockSize;
         recvList[fileName].fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
@@ -64,9 +64,19 @@ public:
         for(int i = 0; i < recvList[fileName].fileBlockNumber; i++)
             recvList[fileName].blockStatus.append(false);
     }
+    /**
+    * @brief 本次接受到的文件名
+    *
+    * @return 
+    */
     QString getFileName(void)
     {
         return fileName;
+    }
+
+    QString getStorePath(QString name)
+    {
+        return recvList[name].storePath;
     }
 
     quint32 getBlockSize(QString name)

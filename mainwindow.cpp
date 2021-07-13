@@ -238,7 +238,7 @@ void MainWindow::initSignalSlot()
     // 收到正确的文件信息，立刻响应发送端
     connect(dispatch, &ProtocolDispatch::slaveFileInfoReady, this, [this](QByteArray &data) {
         recvFlow->setFileInfo(data);
-        userFile.setFileName("cache/slave/" + recvFlow->getFileName());
+        userFile.setFileName(recvFlow->getStorePath(recvFlow->getFileName()));
         if(!userFile.open(QIODevice::WriteOnly))
         {
             QMessageBox::critical(this, "错误", "创建文件失败");
@@ -399,9 +399,8 @@ void MainWindow::initSignalSlot()
             QMessageBox::warning(this, "warning", "请检查TCP是否连接");
             return;
         }
-        filePath = Common::getFileNameFromFullPath(filePath);
-
         sendFlow->setFileName(filePath);
+        filePath = Common::getFileNameFromFullPath(filePath);
         sendFlow->setFileBlockSize(filePath, sysPara.blockSize);
         if(sendFlow->send(filePath, sysPara.blockIntervalTime, sysPara.repeatNum) == false)
             QMessageBox::warning(this, "warning", "发送文件失败");
@@ -415,7 +414,7 @@ void MainWindow::initSignalSlot()
     connect(ui->btn_sendText, &QPushButton::pressed, this, [this]() {
         if(ui->textEdit_send->toPlainText().length() == 0)
             return;
-        QFile file("tmpFile.chat");
+        QFile file("cache/master/tmpFile.chat");
         file.open(QIODevice::WriteOnly);
         file.write(ui->textEdit_send->toPlainText().toStdString().data());
         file.close();
@@ -424,7 +423,7 @@ void MainWindow::initSignalSlot()
         ui->textEdit_recv->append(ui->textEdit_send->toPlainText());
 
         opStatus = SEND_FILE;
-        sendFlow->setFileName("tmpFile.chat");
+        sendFlow->setFileName("cache/master/tmpFile.chat");
         sendFlow->setFileBlockSize("tmpFile.chat", sysPara.blockSize);
 
         if(sendFlow->send("tmpFile.chat", sysPara.blockIntervalTime, sysPara.repeatNum) == false)
@@ -521,9 +520,9 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_capturePic, &QPushButton::pressed, this, [this]() {
-        cameraImageCapture->capture(QDir::currentPath() + "/tmpVedio");
+        cameraImageCapture->capture(QDir::currentPath() + "/cache/master/tmpVedio");
         opStatus = SEND_FILE;
-        sendFlow->setFileName("tmpVedio.jpg");
+        sendFlow->setFileName("cache/master/tmpVedio.jpg");
         sendFlow->setFileBlockSize("tmpVedio.jpg", sysPara.blockSize);
 
         sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.repeatNum);

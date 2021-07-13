@@ -264,12 +264,14 @@ void MainWindow::initSignalSlot()
         else
             offset = blockNo * validLen;
 
+        qDebug() << "respons to master";
         // 因为发送方延迟接受，重发数据块时，依旧进行响应
         QByteArray frame = recvFlow->packResponse(fileName, blockNo, validLen);
         dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
 
         if(recvFlow->getBlockStatus(fileName, blockNo) == false)
         {
+            qDebug() << "write file block at : " << offset;
             userFile.seek(offset);
             userFile.write(recvData);
             recvFlow->setBlockStatus(fileName, blockNo);
@@ -280,6 +282,7 @@ void MainWindow::initSignalSlot()
             if(userFile.handle() == -1)
                 return;
 
+            qDebug() << "receive all file blocks, close file";
             userFile.close();
 
             ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
@@ -295,6 +298,12 @@ void MainWindow::initSignalSlot()
             {
                 ui->label_recvFile->setPixmap(QPixmap(recvFlow->getFileName()));
                 ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ". 请打开图片界面查看");
+            }
+
+            else if(recvFlow->getFileName().toLower().endsWith("jpg"))
+            {
+                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
+                ui->label_vedioShow->setPixmap(QPixmap(recvFlow->getFileName()));
             }
 
             else if(recvFlow->getFileName().toLower().endsWith("wav"))
@@ -389,7 +398,7 @@ void MainWindow::initSignalSlot()
 
         sendFlow->setFileName(filePath);
         sendFlow->setFileBlockSize(filePath, sysPara.blockSize);
-        if(sendFlow->send(filePath, sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum) == false)
+        if(sendFlow->send(filePath, sysPara.blockIntervalTime, sysPara.repeatNum) == false)
             QMessageBox::warning(this, "warning", "发送文件失败");
 
         ui->textEdit_recv->append("<font color=red>[Sender] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
@@ -413,7 +422,7 @@ void MainWindow::initSignalSlot()
         sendFlow->setFileName("tmpFile.chat");
         sendFlow->setFileBlockSize("tmpFile.chat", sysPara.blockSize);
 
-        if(sendFlow->send("tmpFile.chat", sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum) == false)
+        if(sendFlow->send("tmpFile.chat", sysPara.blockIntervalTime, sysPara.repeatNum) == false)
             QMessageBox::warning(this, "warning", "信息文件失败");
 
         ui->textEdit_send->clear();
@@ -479,7 +488,7 @@ void MainWindow::initSignalSlot()
         sendFlow->setFileName(fileName);
         sendFlow->setFileBlockSize(fileName, sysPara.blockSize);
 
-        sendFlow->send(fileName, sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum);
+        sendFlow->send(fileName, sysPara.blockIntervalTime, sysPara.repeatNum);
         opStatus = IDLE;
     });
 
@@ -507,11 +516,17 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_capturePic, &QPushButton::pressed, this, [this]() {
-        cameraImageCapture->capture(QCoreApplication::applicationDirPath() + "/abcde");
+        cameraImageCapture->capture(QDir::currentPath() + "/tmpVedio");
+        opStatus = SEND_FILE;
+        sendFlow->setFileName("tmpVedio.jpg");
+        sendFlow->setFileBlockSize("tmpVedio.jpg", sysPara.blockSize);
+
+        sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
+        opStatus = IDLE;
     });
 
     connect(ui->btn_cameraOpenVideo, &QPushButton::pressed, this, [this]() {
-        cameraTimer->start(300);
+        cameraTimer->start(sysPara.cycleIntervalTime);
     });
 
     connect(ui->btn_cameraCloseVideo, &QPushButton::pressed, this, [this]() {
@@ -519,12 +534,12 @@ void MainWindow::initSignalSlot()
     });
 
     connect(cameraTimer, &QTimer::timeout, this, [this]() {
-        cameraImageCapture->capture(QCoreApplication::applicationDirPath() + "/tmpVedio");
+        cameraImageCapture->capture(QDir::currentPath() + "/tmpVedio");
         opStatus = SEND_FILE;
         sendFlow->setFileName("tmpVedio.jpg");
         sendFlow->setFileBlockSize("tmpVedio.jpg", sysPara.blockSize);
 
-        sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.cycleIntervalTime, sysPara.repeatNum);
+        sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
         opStatus = IDLE;
     });
 }

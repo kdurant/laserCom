@@ -59,7 +59,7 @@ public:
 
     bool sendFileBlock(QByteArray &fileBlock);
 
-    bool send(QString name, int blockInterval, int fileInterval, int repeatNum);
+    bool send(QString name, int blockInterval, int repeatNum);
 
     void initBlockStatus(QString name)
     {

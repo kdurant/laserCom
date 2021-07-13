@@ -107,15 +107,17 @@ int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
  * 2.         sendFlow->setFileBlockSize(sysPara.blockSize);
 
  * @param blockInterval
- * @param fileInterval
  * @param repeatNum
  * @return
  */
-bool SendFile::send(QString name, int blockInterval, int fileInterval, int repeatNum)
+bool SendFile::send(QString name, int blockInterval, int repeatNum)
 {
-    qDebug() << ">>>>>>>>>>>>>>>the end of sending info";
+    qDebug() << ">>>>>>>>>>>>>>>the start of sending info";
     if(sendFileInfo(name, repeatNum) == false)
+    {
+        qDebug() << "sendFileInfo() failed";
         return false;
+    }
     qDebug() << ">>>>>>>>>>>>>>>the end of sending info";
 
     int sendCnt = 0;

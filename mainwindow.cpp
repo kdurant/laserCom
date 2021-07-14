@@ -519,7 +519,6 @@ void MainWindow::initSignalSlot()
         cameraImageCapture->capture(QDir::currentPath() + "/cache/master/tmpVedio");
 
         QFile file("cache/master/tmpVedio.jpg");
-        qDebug() << "isExists() = " << file.exists() << "; file size = " << file.size();
 
         opStatus = SEND_FILE;
         sendFlow->setFileName("cache/master/tmpVedio.jpg");
@@ -527,8 +526,6 @@ void MainWindow::initSignalSlot()
 
         sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
         opStatus = IDLE;
-
-        qDebug() << "isExists() = " << file.exists() << "; file size = " << file.size();
     });
 
     connect(ui->btn_cameraOpenVideo, &QPushButton::pressed, this, [this]() {

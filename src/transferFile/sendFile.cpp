@@ -2,15 +2,15 @@
 
 bool SendFile::sendFileInfo(QString name, int repeatNum)
 {
+    quint32 size = QFileInfo(sendList[name].storePath).size();
+    if(size == 0)
+        return false;
+
     int sendCnt = 0;
 
     QByteArray frame;
     frame.append(name.toLatin1());
     frame.append('?');
-
-    QFile   file(sendList[name].storePath);
-    quint32 size = file.size();
-    file.close();
 
     frame.append(Common::int2ba(size));
     frame.append('?');
@@ -48,7 +48,6 @@ send_frame:
 
     if(++sendCnt < repeatNum)
         goto send_frame;
-
     return false;
 }
 
@@ -63,7 +62,8 @@ send_frame:
 int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
 {
     QByteArray data;
-    QFile      file(sendList[name].storePath);
+
+    QFile file(sendList[name].storePath);
     qDebug() << "isExists() = " << file.exists() << "file size = " << file.size();
 
     if(!file.exists())
@@ -127,18 +127,8 @@ int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
  */
 bool SendFile::send(QString name, int blockInterval, int repeatNum)
 {
-    QFile file(sendList[name].storePath);
-    qDebug() << "Before sendFileInfo: isExists() = " << file.exists() << "file size = " << file.size();
-
-    if(sendFileInfo(name, repeatNum) == false)
-    {
-        qDebug() << "sendFileInfo() failed";
-        return false;
-    }
-
-    qDebug() << "After sendFileInfo: isExists() = " << file.exists() << "file size = " << file.size();
+    qDebug() << "---------------the start of sending file";
     int sendCnt = 0;
-
     // 2. 分割文件
     QVector<QByteArray> allFileBlock;
     int                 fileBlockNumber = splitData(name, allFileBlock);
@@ -149,7 +139,12 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum)
     }
     initBlockStatus(name);
 
-    qDebug() << "---------------the start of sending file";
+    if(sendFileInfo(name, repeatNum) == false)
+    {
+        qDebug() << "sendFileInfo() failed";
+        return false;
+    }
+
     sendCnt = 0;
     for(int i = 0, sendCnt = 0; i < fileBlockNumber && sendCnt < repeatNum; i++)
     {

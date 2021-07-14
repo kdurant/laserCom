@@ -213,6 +213,7 @@ void MainWindow::initSignalSlot()
 
     connect(dispatch, &ProtocolDispatch::frameDataReady, this, [this](QByteArray &data) {
         tcpClient->write(data);
+        tcpClient->waitForBytesWritten();
     });
 
     // connect(dispatch, &ProtocolDispatch::errorDataReady, this, [this](QByteArray &data) {

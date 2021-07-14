@@ -10,6 +10,8 @@ bool SendFile::sendFileInfo(QString name, int repeatNum)
 
     QFile   file(sendList[name].storePath);
     quint32 size = file.size();
+    file.close();
+
     frame.append(Common::int2ba(size));
     frame.append('?');
 
@@ -62,15 +64,27 @@ int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
 {
     QByteArray data;
     QFile      file(sendList[name].storePath);
+    qDebug() << "isExists() = " << file.exists() << "file size = " << file.size();
+
     if(!file.exists())
         return -1;
+    if(file.size() == 0)
+        return -1;
+
     file.open(QIODevice::ReadOnly);
 
     sendList[name].fileSize        = file.size();
     sendList[name].fileBlockNumber = qCeil(sendList[name].fileSize / (qreal)sendList[name].blockSize);
-    quint32    curretFileBlock     = 0;
-    quint32    validLen            = 0;
-    char*      buffer              = new char[sendList[name].blockSize];
+    if(sendList[name].fileBlockNumber <= 0)
+    {
+        qDebug() << "file.size() = " << file.size();
+        file.close();
+        return -1;
+    }
+
+    quint32    curretFileBlock = 0;
+    quint32    validLen        = 0;
+    char*      buffer          = new char[sendList[name].blockSize];
     QByteArray blockData;
     QByteArray frame;
     QByteArray tmp;
@@ -113,14 +127,16 @@ int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
  */
 bool SendFile::send(QString name, int blockInterval, int repeatNum)
 {
-    qDebug() << ">>>>>>>>>>>>>>>the start of sending info";
+    QFile file(sendList[name].storePath);
+    qDebug() << "Before sendFileInfo: isExists() = " << file.exists() << "file size = " << file.size();
+
     if(sendFileInfo(name, repeatNum) == false)
     {
         qDebug() << "sendFileInfo() failed";
         return false;
     }
-    qDebug() << ">>>>>>>>>>>>>>>the end of sending info";
 
+    qDebug() << "After sendFileInfo: isExists() = " << file.exists() << "file size = " << file.size();
     int sendCnt = 0;
 
     // 2. 分割文件
@@ -140,13 +156,21 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum)
         if(getBlockStatus(name, i) == false)
         {
             qDebug() << "sendCnt =  " << sendCnt << "; i = " << i;
-            emit          sendDataReady(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
-            QElapsedTimer time;
-            time.start();
-            while(time.elapsed() < blockInterval)
-            {
-                QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-            }
+            emit sendDataReady(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+
+            qDebug() << "record waiting time at starting";
+            QEventLoop waitLoop;  // 等待响应数据，或者1000ms超时
+            connect(this, &SendFile::receivedNewBlock, &waitLoop, &QEventLoop::quit);
+            QTimer::singleShot(100, &waitLoop, &QEventLoop::quit);
+            waitLoop.exec();
+            qDebug() << "record stoping time at starting";
+
+            // QElapsedTimer time;
+            // time.start();
+            // while(time.elapsed() < blockInterval)
+            // {
+            // QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+            // }
             emit successBlockNumber(getBlockSuccessNumber(name));
         }
         if(isSendAllBlock(name))

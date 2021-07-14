@@ -56,6 +56,8 @@ public:
     void userStatusBar();
 
     QString read_ip_address();
+signals:
+    void receivedNewBlock();
 
 private:
     enum OpStatus

@@ -108,11 +108,19 @@ signals:
     void successBlockNumber(int number);
     void errorDataReady(QString error);
 
+    void receivedNewBlock();
+
 public slots:
     void setNewData(QByteArray const &data)
     {
         recvData = data;
+        qDebug() << "send responseDataReady() signal";
         emit responseDataReady();
+    }
+
+    void getNewBlock(void)
+    {
+        emit receivedNewBlock();
     }
 };
 #endif

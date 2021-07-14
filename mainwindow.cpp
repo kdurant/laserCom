@@ -252,27 +252,20 @@ void MainWindow::initSignalSlot()
         dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
     });
 
+    // 接收端发送的响应由于TCP流的关系，发送方会延迟收到，导致已经正确的数据，重复发送
     connect(recvFlow, &RecvFile::fileBlockReady, this, [this](QString fileName, quint32 blockNo, quint32 validLen, QByteArray &recvData) {
         qDebug() << "receive blockNo = " << blockNo;
-        // 接收端发送的响应由于TCP流的关系，发送方会延迟收到，导致已经正确的数据，重复发送
-        //        if(recvFlow->isRecvAllBlock())
-        //        {
-        //            qDebug() << "All file blocks are received!";
-        //            return;
-        //        }
+
+        QByteArray frame = recvFlow->packResponse(fileName, blockNo, validLen);
+        dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
 
         qint64 offset = 0;
-
         if(validLen != recvFlow->getBlockSize(fileName))
             offset = blockNo * recvFlow->getBlockSize(fileName);
         else
             offset = blockNo * validLen;
 
-        qDebug() << "respons to master";
         // 因为发送方延迟接受，重发数据块时，依旧进行响应
-        QByteArray frame = recvFlow->packResponse(fileName, blockNo, validLen);
-        dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
-
         if(recvFlow->getBlockStatus(fileName, blockNo) == false)
         {
             qDebug() << "write file block at : " << offset;
@@ -371,6 +364,7 @@ void MainWindow::initSignalSlot()
     /*
      发送端处理流程
      */
+    connect(this, &MainWindow::receivedNewBlock, sendFlow, &SendFile::getNewBlock);
     connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFlow, &SendFile::setNewData);
     connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
         int     offset = data.indexOf('?');
@@ -378,6 +372,7 @@ void MainWindow::initSignalSlot()
         offset++;
         int curretFileBlock = Common::ba2int(data.mid(offset + 5, 4));
         sendFlow->setBlockStatus(name, curretFileBlock, true);
+        emit receivedNewBlock();
         qDebug() << "receive blockNo is: " << curretFileBlock;
     });
 
@@ -522,12 +517,18 @@ void MainWindow::initSignalSlot()
 
     connect(ui->btn_capturePic, &QPushButton::pressed, this, [this]() {
         cameraImageCapture->capture(QDir::currentPath() + "/cache/master/tmpVedio");
+
+        QFile file("cache/master/tmpVedio.jpg");
+        qDebug() << "isExists() = " << file.exists() << "; file size = " << file.size();
+
         opStatus = SEND_FILE;
         sendFlow->setFileName("cache/master/tmpVedio.jpg");
         sendFlow->setFileBlockSize("tmpVedio.jpg", sysPara.blockSize);
 
         sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
         opStatus = IDLE;
+
+        qDebug() << "isExists() = " << file.exists() << "; file size = " << file.size();
     });
 
     connect(ui->btn_cameraOpenVideo, &QPushButton::pressed, this, [this]() {

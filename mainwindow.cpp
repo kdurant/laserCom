@@ -246,7 +246,7 @@ void MainWindow::initSignalSlot()
         }
         else
         {
-            qDebug() << "成功创建" << recvFlow->getFileName();
+            qDebug() << "create file: " << recvFlow->getFileName();
         }
         opStatus = RECV_FILE;
         dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
@@ -301,8 +301,11 @@ void MainWindow::initSignalSlot()
 
             else if(path.toLower().endsWith("jpg"))
             {
+                QElapsedTimer timer;
+                timer.start();
                 ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
                 ui->label_vedioShow->setPixmap(QPixmap(path));
+                qDebug() << "Display picture elapsed(ms) : " << timer.elapsed();
             }
 
             else if(path.toLower().endsWith("wav"))
@@ -538,11 +541,15 @@ void MainWindow::initSignalSlot()
 
     connect(cameraTimer, &QTimer::timeout, this, [this]() {
         cameraImageCapture->capture(QDir::currentPath() + "/tmpVedio");
+        qDebug() << "Record time of the capture picture. file size = " << QFileInfo("cache/master/tmpVedio.jpg").size();
         opStatus = SEND_FILE;
         sendFlow->setFileName("tmpVedio.jpg");
         sendFlow->setFileBlockSize("tmpVedio.jpg", sysPara.blockSize);
-
         sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
+
+        // sendFlow->setFileName("cache/master/test16k.bin");
+        // sendFlow->setFileBlockSize("test16k.bin", sysPara.blockSize);
+        // sendFlow->send("test16k.bin", sysPara.blockIntervalTime, sysPara.repeatNum);
         opStatus = IDLE;
     });
 }

@@ -64,7 +64,6 @@ int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
     QByteArray data;
 
     QFile file(sendList[name].storePath);
-    qDebug() << "isExists() = " << file.exists() << "file size = " << file.size();
 
     if(!file.exists())
         return -1;
@@ -153,12 +152,10 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum)
             qDebug() << "sendCnt =  " << sendCnt << "; i = " << i;
             emit sendDataReady(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
 
-            qDebug() << "record waiting time at starting";
-            QEventLoop waitLoop;  // 等待响应数据，或者1000ms超时
+            QEventLoop waitLoop;  // 正常情况下大概需要30ms
             connect(this, &SendFile::receivedNewBlock, &waitLoop, &QEventLoop::quit);
-            QTimer::singleShot(100, &waitLoop, &QEventLoop::quit);
+            QTimer::singleShot(blockInterval, &waitLoop, &QEventLoop::quit);
             waitLoop.exec();
-            qDebug() << "record stoping time at starting";
 
             // QElapsedTimer time;
             // time.start();
@@ -173,7 +170,7 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum)
         if(i == fileBlockNumber - 1)
         {
             qDebug() << "sendCnt++";
-            i = 0;
+            i = -1;
             sendCnt++;
         }
     }

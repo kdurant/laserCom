@@ -114,7 +114,6 @@ public slots:
     void setNewData(QByteArray const &data)
     {
         recvData = data;
-        qDebug() << "send responseDataReady() signal";
         emit responseDataReady();
     }
 

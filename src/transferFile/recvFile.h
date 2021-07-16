@@ -93,6 +93,24 @@ public:
     {
         return recvList[name].blockStatus[index];
     }
+
+    /**
+    * @brief 获得所有成功文件块的个数
+    *
+    * @param name
+    *
+    * @return 
+    */
+    int getBlockSuccessNumber(QString name)
+    {
+        return std::count(recvList[name].blockStatus.begin(), recvList[name].blockStatus.end(), true);
+    }
+
+    int getAllBlockNumber(QString name)
+    {
+        return recvList[name].blockStatus.size();
+    }
+
     bool isRecvAllBlock(QString name)
     {
         bool status = std::all_of(recvList[name].blockStatus.begin(), recvList[name].blockStatus.end(), [](int i) {

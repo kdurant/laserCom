@@ -20,6 +20,9 @@ bool SendFile::sendFileInfo(QString name, int repeatNum)
 send_frame:
     emit sendDataReady(UserProtocol::SET_FILE_INFO, frame);
 
+    if(name.endsWith("jpg"))
+        return true;
+
     QEventLoop waitLoop;  // 等待响应数据，或者1000ms超时
     connect(this, &SendFile::responseDataReady, &waitLoop, &QEventLoop::quit);
     QTimer::singleShot(100, &waitLoop, &QEventLoop::quit);
@@ -169,14 +172,8 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum)
         if(i == fileBlockNumber - 1)
         {
             qDebug("Round %d has sent over!", sendCnt);
-            QByteArray    data = QByteArray(1411, 0x11);
-            emit          sendDataReady(UserProtocol::SET_TEST_PATTERN, data);
-            QElapsedTimer time;
-            time.start();
-            while(time.elapsed() < blockInterval)
-            {
-                QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-            }
+            if(name.endsWith("jpg"))
+                break;
 
             qDebug() << "sendCnt++";
             i = -1;

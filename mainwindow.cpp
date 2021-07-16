@@ -256,8 +256,11 @@ void MainWindow::initSignalSlot()
     connect(recvFlow, &RecvFile::fileBlockReady, this, [this](QString fileName, quint32 blockNo, quint32 validLen, QByteArray &recvData) {
         qInfo() << "receive blockNo = " << blockNo;
 
-        QByteArray frame = recvFlow->packResponse(fileName, blockNo, validLen);
-        dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
+        if(!fileName.endsWith("jpg"))
+        {
+            QByteArray frame = recvFlow->packResponse(fileName, blockNo, validLen);
+            dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
+        }
 
         qint64 offset = 0;
         if(validLen != recvFlow->getBlockSize(fileName))
@@ -274,6 +277,8 @@ void MainWindow::initSignalSlot()
             recvFlow->setBlockStatus(fileName, blockNo);
         }
 
+        qInfo() << "recvFlow->getAllBlockNumber(fileName) = " << recvFlow->getAllBlockNumber(fileName)
+                << ", recvFlow->getBlockSuccessNumber(fileName) = " << recvFlow->getBlockSuccessNumber(fileName);
         if(recvFlow->isRecvAllBlock(fileName))
         {
             if(userFile.handle() == -1)

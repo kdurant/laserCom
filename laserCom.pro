@@ -3,6 +3,8 @@ QT       += network
 QT       += multimedia
 QT       += multimediawidgets
 
+DEFINES += LOG2FILE
+#DEFINES += QT_NO_DEBUG_OUTPUT
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -57,7 +59,6 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-DEFINES += LOG2FILE
 
 RESOURCES += \
     res/res.qrc

@@ -254,7 +254,7 @@ void MainWindow::initSignalSlot()
 
     // 接收端发送的响应由于TCP流的关系，发送方会延迟收到，导致已经正确的数据，重复发送
     connect(recvFlow, &RecvFile::fileBlockReady, this, [this](QString fileName, quint32 blockNo, quint32 validLen, QByteArray &recvData) {
-        qDebug() << "receive blockNo = " << blockNo;
+        qInfo() << "receive blockNo = " << blockNo;
 
         QByteArray frame = recvFlow->packResponse(fileName, blockNo, validLen);
         dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
@@ -268,7 +268,7 @@ void MainWindow::initSignalSlot()
         // 因为发送方延迟接受，重发数据块时，依旧进行响应
         if(recvFlow->getBlockStatus(fileName, blockNo) == false)
         {
-            qDebug() << "write file block at : " << offset;
+            qInfo() << "write file block at : " << offset;
             userFile.seek(offset);
             userFile.write(recvData);
             recvFlow->setBlockStatus(fileName, blockNo);
@@ -279,7 +279,7 @@ void MainWindow::initSignalSlot()
             if(userFile.handle() == -1)
                 return;
 
-            qDebug() << "receive all file blocks, close file";
+            qInfo() << "receive all file blocks, close file";
             userFile.close();
 
             ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
@@ -305,7 +305,7 @@ void MainWindow::initSignalSlot()
                 timer.start();
                 ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
                 ui->label_vedioShow->setPixmap(QPixmap(path));
-                qDebug() << "Display picture elapsed(ms) : " << timer.elapsed();
+                qInfo() << "Display picture elapsed(ms) : " << timer.elapsed();
             }
 
             else if(path.toLower().endsWith("wav"))
@@ -320,7 +320,7 @@ void MainWindow::initSignalSlot()
                 ui->textEdit_recv->append("received file: " + path + ".");
             }
             opStatus = IDLE;
-            qDebug() << "All file blocks are received!";
+            qInfo() << "All file blocks are received!";
         }
     });
     // 收到文件块数据，发送接收文件模块处理

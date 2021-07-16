@@ -165,14 +165,26 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum)
             // }
             emit successBlockNumber(getBlockSuccessNumber(name));
         }
-        if(isSendAllBlock(name))
-            break;
+
         if(i == fileBlockNumber - 1)
         {
+            qDebug("Round %d has sent over!", sendCnt);
+            QByteArray    data = QByteArray(1411, 0x11);
+            emit          sendDataReady(UserProtocol::SET_TEST_PATTERN, data);
+            QElapsedTimer time;
+            time.start();
+            while(time.elapsed() < blockInterval)
+            {
+                QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+            }
+
             qDebug() << "sendCnt++";
             i = -1;
             sendCnt++;
         }
+
+        if(isSendAllBlock(name))
+            break;
     }
     qDebug() << "---------------the end of sending file";
 

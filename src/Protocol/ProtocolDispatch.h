@@ -41,7 +41,6 @@ public:
     ~ProtocolDispatch()
     {
     }
-    void parserFrame(QByteArray &data);
     void processCommand(QByteArray &frame);
 
     static uint32_t getCommand(QByteArray &data)
@@ -63,6 +62,13 @@ public:
         return data.mid(FrameField::DATA_POS, FrameField::DATA_LEN).toHex().toUInt(nullptr, 16);
     }
 
+    /**
+    * @brief 根据协议，获得数据区的全部数据
+    *
+    * @param data, 协议帧的全部数据
+    *
+    * @return 
+    */
     static QByteArray getData(QByteArray &data)
     {
         quint32    data_len = getDataLen(data);
@@ -70,22 +76,28 @@ public:
         frame = data.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
         return frame;
     }
+
+    void setNewData(QByteArray &data)
+    {
+        emit readyRead(data);
+    }
+
 public slots:
     void encode(qint32 command, QByteArray &data);
+    void parserFrame(QByteArray &data);
 
 signals:
+    void readyRead(QByteArray &data);
     /**
-     * @brief 系统状态不转发，直接返回
-     * @param data
+     * @brief 协议相关的信号
      */
     void heartBeatReady(quint32 number);
-
     void slaveFileInfoReady(QByteArray &data);    // 从机收到主机设置的文件信息
     void masterFileInfoReady(QByteArray &data);   // 主机收到从机对文件信息的应答
     void slaveFileBlockReady(QByteArray &data);   // 从机收到主机设置的文件块数据
     void masterFileBlockReady(QByteArray &data);  // 主机收到从机对文件数据块的应答
-    void frameDataReady(QByteArray &data);
 
+    void frameDataReady(QByteArray &data);
     void errorDataReady(QString &data);
 
 private:

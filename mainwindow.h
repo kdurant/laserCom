@@ -82,6 +82,7 @@ private:
     QSettings *     configIni;
     QLabel *        statusLabel;
     qint32          timer1s;
+    QThread *       thread;
 
     QEventLoop *eventloop;
     qint32      tcpPort;

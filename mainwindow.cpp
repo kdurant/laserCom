@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     recvFlow = new RecvFile();
     sendFlow = new SendFile();
     timer1s  = startTimer(1000);
+    thread   = new QThread();
     opStatus = IDLE;
     tcpClient->setSocketOption(QAbstractSocket::LowDelayOption, 1);
 
@@ -39,6 +40,10 @@ MainWindow::MainWindow(QWidget *parent) :
     cameraImageCapture = new QCameraImageCapture(camera);
     cameraImageCapture->setCaptureDestination(QCameraImageCapture::CaptureToFile);
     cameraTimer = new QTimer();
+
+    dispatch->moveToThread(thread);
+    connect(dispatch, &ProtocolDispatch::readyRead, dispatch, &ProtocolDispatch::parserFrame);
+    thread->start();
 
     initParameter();
     initUI();
@@ -165,7 +170,7 @@ void MainWindow::initSignalSlot()
     connect(tcpClient, &QTcpSocket::readyRead, this, [this]() {
         QByteArray buffer;
         buffer = tcpClient->readAll();
-        dispatch->parserFrame(buffer);
+        dispatch->setNewData(buffer);
 
         testStatus = true;
         //                statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));

@@ -255,7 +255,11 @@ void MainWindow::initSignalSlot()
             qDebug() << "create file: " << recvFlow->getFileName();
         }
         opStatus = RECV_FILE;
-        dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
+
+        if(!userFile.fileName().endsWith("jpg"))
+        {
+            dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
+        }
     });
 
     // 接收端发送的响应由于TCP流的关系，发送方会延迟收到，导致已经正确的数据，重复发送
@@ -390,7 +394,10 @@ void MainWindow::initSignalSlot()
         qDebug() << "receive blockNo is: " << curretFileBlock;
     });
 
-    connect(sendFlow, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
+    // connect(sendFlow, &SendFile::sendDataReady, dispatch, &ProtocolDispatch::encode);
+    connect(sendFlow, &SendFile::sendDataReady, this, [this](qint32 command, QByteArray &data) {
+        dispatch->encode(command, data);
+    });
 
     connect(ui->btn_sendFile, &QPushButton::pressed, this, [this]() {
         opStatus         = SEND_FILE;

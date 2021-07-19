@@ -28,6 +28,9 @@ start:
     tailOffset = -1;
     headOffset = frame.indexOf(head);
     tailOffset = frame.indexOf(tail);
+    qInfo()
+        << QThread::currentThreadId()
+        << "Step 1";
     if(headOffset == -1 || tailOffset == -1)
     {
         // 一次TCP数据里没有帧头和帧尾, 等下一次进来数据再接着处理
@@ -47,6 +50,9 @@ start:
     }
     else
     {
+        qInfo()
+            << QThread::currentThreadId()
+            << "Step 2";
         command = frame.mid(headOffset, tailOffset + 8 - headOffset);
         qInfo()
             << QThread::currentThreadId()

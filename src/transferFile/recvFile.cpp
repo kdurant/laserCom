@@ -44,7 +44,7 @@ bool RecvFile::processFileBlock(QByteArray &data)
  * @brief RecvFile::getFileBlock
  * 从数据流中，根据帧头和桢尾标志，截取出一个完整的文件块
  */
-void RecvFile::paserNewData(QByteArray &data)
+void RecvFile::paserNewData(QByteArray data)
 {
     processFileBlock(data);
 }

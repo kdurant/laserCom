@@ -77,25 +77,25 @@ public:
         return frame;
     }
 
-    void setNewData(QByteArray &data)
+    void setNewData(QByteArray data)
     {
         emit readyRead(data);
     }
 
 public slots:
     void encode(qint32 command, QByteArray &data);
-    void parserFrame(QByteArray &data);
+    void parserFrame(QByteArray data);
 
 signals:
-    void readyRead(QByteArray &data);
+    void readyRead(QByteArray data);
     /**
      * @brief 协议相关的信号
      */
     void heartBeatReady(quint32 number);
-    void slaveFileInfoReady(QByteArray &data);    // 从机收到主机设置的文件信息
-    void masterFileInfoReady(QByteArray &data);   // 主机收到从机对文件信息的应答
-    void slaveFileBlockReady(QByteArray &data);   // 从机收到主机设置的文件块数据
-    void masterFileBlockReady(QByteArray &data);  // 主机收到从机对文件数据块的应答
+    void slaveFileInfoReady(QByteArray data);    // 从机收到主机设置的文件信息
+    void masterFileInfoReady(QByteArray data);   // 主机收到从机对文件信息的应答
+    void slaveFileBlockReady(QByteArray data);   // 从机收到主机设置的文件块数据
+    void masterFileBlockReady(QByteArray data);  // 主机收到从机对文件数据块的应答
 
     void frameDataReady(QByteArray &data);
     void errorDataReady(QString &data);

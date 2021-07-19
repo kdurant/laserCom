@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
     initSignalSlot();
     userStatusBar();
 
+    qDebug() << "main thread id = " << QThread::currentThreadId();
     //    ui->label_changeLog->setText(CHANGELOG);
 }
 
@@ -242,7 +243,7 @@ void MainWindow::initSignalSlot()
     // 2. 主机同样会接收到相似的信号(0x21)
     // 但处理方法不一样，所以信号名要加以区分
     // 收到正确的文件信息，立刻响应发送端
-    connect(dispatch, &ProtocolDispatch::slaveFileInfoReady, this, [this](QByteArray &data) {
+    connect(dispatch, &ProtocolDispatch::slaveFileInfoReady, this, [this](QByteArray data) {
         recvFlow->setFileInfo(data);
         userFile.setFileName(recvFlow->getStorePath(recvFlow->getFileName()));
         if(!userFile.open(QIODevice::WriteOnly))
@@ -379,7 +380,7 @@ void MainWindow::initSignalSlot()
      */
     connect(this, &MainWindow::receivedNewBlock, sendFlow, &SendFile::getNewBlock);
     connect(dispatch, &ProtocolDispatch::masterFileInfoReady, sendFlow, &SendFile::setNewData);
-    connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray &data) {
+    connect(dispatch, &ProtocolDispatch::masterFileBlockReady, this, [this](QByteArray data) {
         int     offset = data.indexOf('?');
         QString name   = data.mid(0, offset);
         offset++;

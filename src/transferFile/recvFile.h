@@ -151,7 +151,7 @@ signals:
     void errorDataReady(QString &data);
 
 public slots:
-    void paserNewData(QByteArray &data);
+    void paserNewData(QByteArray data);
 
 private:
     QString    fileName;

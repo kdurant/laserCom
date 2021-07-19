@@ -111,7 +111,7 @@ signals:
     void receivedNewBlock();
 
 public slots:
-    void setNewData(QByteArray const &data)
+    void setNewData(QByteArray const data)
     {
         recvData = data;
         emit responseDataReady();

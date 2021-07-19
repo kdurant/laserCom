@@ -11,7 +11,7 @@ quint32 ProtocolDispatch::cmdNum = 0;
  * 二、接收文件数据时，TCP肯定会粘包，如何将文件块分开，分别处理？
  * @param data
  */
-void ProtocolDispatch::parserFrame(QByteArray &data)
+void ProtocolDispatch::parserFrame(QByteArray data)
 {
     QByteArray head = Common::QString2QByteArray(FrameHead);
     QByteArray tail = Common::QString2QByteArray(FrameTail);
@@ -19,7 +19,9 @@ void ProtocolDispatch::parserFrame(QByteArray &data)
     int        headOffset;
     int        tailOffset;
 
-    qInfo() << "receive data length from tcp socket = " << data.size();
+    qInfo()
+        << QThread::currentThreadId()
+        << " receive data length from tcp socket = " << data.size();
     frame.append(data);
 start:
     headOffset = -1;
@@ -46,12 +48,16 @@ start:
     else
     {
         command = frame.mid(headOffset, tailOffset + 8 - headOffset);
-        qInfo() << "receive full frame. frame length =  " << command.size();
+        qInfo()
+            << QThread::currentThreadId()
+            << " receive full frame. frame length =  " << command.size();
         processCommand(command);
         frame = frame.mid(tailOffset + 8);
         if(frame.isEmpty() == false)
         {
-            qInfo() << "There are more than one frame in this frame. The length of the rest of frame = " << frame.size();
+            qInfo()
+                << QThread::currentThreadId()
+                << " There are more than one frame in this frame. The length of the rest of frame = " << frame.size();
             goto start;
         }
     }
@@ -80,21 +86,29 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
             transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
             transmitFrame = transmitFrame.mid(6, 4);
 
-            qInfo() << "emit heartBeatReady";
+            qInfo()
+                << QThread::currentThreadId()
+                << "emit heartBeatReady";
             emit heartBeatReady(Common::ba2int(transmitFrame));
             break;
 
         case UserProtocol::MasterSet::SET_TEST_PATTERN:
-            qInfo() << "received MasterSet::SET_TEST_PATTERN";
+            qInfo()
+                << QThread::currentThreadId()
+                << "received MasterSet::SET_TEST_PATTERN";
             break;
 
         // 1. 主机发送SET_FILE_INFO
         // 2. 作为从机，收到主机发送的SET_FILE_INFO命令
         case UserProtocol::MasterSet::SET_FILE_INFO:
             transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
-            qInfo() << "++++Before: emit slaveFileInfoReady";
+            qInfo()
+                << QThread::currentThreadId()
+                << "++++Before: emit slaveFileInfoReady";
             emit slaveFileInfoReady(transmitFrame);
-            qInfo() << "++++After: emit slaveFileInfoReady";
+            qInfo()
+                << QThread::currentThreadId()
+                << "++++After: emit slaveFileInfoReady";
             break;
 
         //3. 作为主机，收到从机发送的RESPONSE_FILE_INFO
@@ -106,9 +120,13 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
         // 1. 主机发送SET_FILE_DATA
         // 2. 作为从机，收到主机发送的文件块数据
         case UserProtocol::MasterSet::SET_FILE_DATA:
-            qInfo() << "----Before: emit slaveFileBlockReady";
+            qInfo()
+                << QThread::currentThreadId()
+                << "----Before: emit slaveFileBlockReady";
             emit slaveFileBlockReady(frame);
-            qInfo() << "----After: emit slaveFileBlockReady";
+            qInfo()
+                << QThread::currentThreadId()
+                << "----After: emit slaveFileBlockReady";
             break;
 
         // 3. 作为主机，收到从机发送的RESPONSE_FILE_DATA

@@ -37,6 +37,7 @@ public:
         int           fileBlockNumber;  // 文件块的数量
         int           blockSize;
         QVector<bool> blockStatus;
+        QFile         file;
     };
 
     enum RecvState
@@ -48,6 +49,8 @@ public:
     };
 
     RecvState state{IDLE};
+
+    QMap<QString, FileInfo> recvList;
 
     void setFileInfo(QByteArray &data)
     {
@@ -63,6 +66,8 @@ public:
         recvList[fileName].blockStatus.clear();
         for(int i = 0; i < recvList[fileName].fileBlockNumber; i++)
             recvList[fileName].blockStatus.append(false);
+        recvList[fileName].file.setFileName(recvList[fileName].storePath);
+        recvList[fileName].file.open(QIODevice::WriteOnly);
     }
     /**
     * @brief 本次接受到的文件名
@@ -119,6 +124,13 @@ public:
         return status;
     }
 
+    bool eraseFileNode(QString name)
+    {
+        auto node = recvList.find(name);
+        recvList.erase(node);
+        return true;
+    }
+
     QByteArray packResponse(QString name, int blockNo, int validLen)
     {
         QByteArray frame;
@@ -159,7 +171,5 @@ private:
     QByteArray frameHead;
     QByteArray frameTail;
     QByteArray fileBlockData;
-
-    QMap<QString, FileInfo> recvList;
 };
 #endif

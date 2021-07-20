@@ -98,7 +98,6 @@ private:
     SendFile *        sendFlow;
     quint32           heartBeatCnt{0};
     quint32           recvByteCnt{0};
-    QFile             userFile;
     QVector<bool>     sendFileBlockStatus{false};
     int               blockSuccessCnt{0};
 

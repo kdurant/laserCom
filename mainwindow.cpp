@@ -162,6 +162,7 @@ void MainWindow::initUI()
         }
     });
 
+    QDir("cache").removeRecursively();
     QDir().mkpath("cache/master");
     QDir().mkpath("cache/slave");
 }
@@ -245,18 +246,9 @@ void MainWindow::initSignalSlot()
     // 收到正确的文件信息，立刻响应发送端
     connect(dispatch, &ProtocolDispatch::slaveFileInfoReady, this, [this](QByteArray data) {
         recvFlow->setFileInfo(data);
-        userFile.setFileName(recvFlow->getStorePath(recvFlow->getFileName()));
-        if(!userFile.open(QIODevice::WriteOnly))
-        {
-            QMessageBox::critical(this, "错误", "创建文件失败");
-        }
-        else
-        {
-            qDebug() << "create file: " << recvFlow->getFileName();
-        }
         opStatus = RECV_FILE;
 
-        if(!userFile.fileName().endsWith("jpg"))
+        if(!recvFlow->getFileName().endsWith("jpg"))
         {
             dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
         }
@@ -264,7 +256,7 @@ void MainWindow::initSignalSlot()
 
     // 接收端发送的响应由于TCP流的关系，发送方会延迟收到，导致已经正确的数据，重复发送
     connect(recvFlow, &RecvFile::fileBlockReady, this, [this](QString fileName, quint32 blockNo, quint32 validLen, QByteArray &recvData) {
-        qInfo() << "receive blockNo = " << blockNo;
+        qInfo() << fileName << " :receive blockNo = " << blockNo;
 
         if(!fileName.endsWith("jpg"))
         {
@@ -278,24 +270,26 @@ void MainWindow::initSignalSlot()
         else
             offset = blockNo * validLen;
 
-        // 因为发送方延迟接受，重发数据块时，依旧进行响应
+        // 如果数据块没有被标记，则将数据写入文件
         if(recvFlow->getBlockStatus(fileName, blockNo) == false)
         {
-            qInfo() << "write file block at : " << offset;
-            userFile.seek(offset);
-            userFile.write(recvData);
+            qInfo() << fileName << " : write file block at : " << offset;
+            recvFlow->recvList[fileName].file.seek(offset);
+            recvFlow->recvList[fileName].file.write(recvData);
             recvFlow->setBlockStatus(fileName, blockNo);
         }
 
-        qInfo() << "recvFlow->getAllBlockNumber(fileName) = " << recvFlow->getAllBlockNumber(fileName)
+        qInfo() << fileName
+                << ": recvFlow->getAllBlockNumber(fileName) = " << recvFlow->getAllBlockNumber(fileName)
                 << ", recvFlow->getBlockSuccessNumber(fileName) = " << recvFlow->getBlockSuccessNumber(fileName);
         if(recvFlow->isRecvAllBlock(fileName))
         {
-            if(userFile.handle() == -1)
+            if(recvFlow->recvList[fileName].file.handle() == -1)  // 文件已经关闭
                 return;
 
-            qInfo() << "receive all file blocks, close file";
-            userFile.close();
+            qInfo() << fileName << ": receive all file blocks, close file";
+            recvFlow->recvList[fileName].file.close();
+            recvFlow->eraseFileNode(fileName);
 
             ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
 

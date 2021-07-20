@@ -162,9 +162,18 @@ void MainWindow::initUI()
         }
     });
 
-    QDir("cache").removeRecursively();
     QDir().mkpath("cache/master");
     QDir().mkpath("cache/slave");
+
+    QDir m("cache/master");
+    m.setFilter(QDir::Files);
+    for(uint i = 0; i < m.count(); ++i)
+        m.remove(m[i]);
+
+    QDir s("cache/slave");
+    s.setFilter(QDir::Files);
+    for(uint i = 0; i < s.count(); ++i)
+        s.remove(s[i]);
 }
 
 void MainWindow::initSignalSlot()
@@ -533,13 +542,17 @@ void MainWindow::initSignalSlot()
     connect(ui->btn_capturePic, &QPushButton::pressed, this, [this]() {
         QString path = QDir::currentPath() + "/cache/master/";
         QString name = QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss_zzz");
-        cameraImageCapture->capture(path + name);
+
+        cameraImageCapture->capture(path + name + ".jpg");
+        Common::sleepWithoutBlock(80);
+        qDebug() << path + name + ".jpg : "
+                 << "Record time of the capture picture. file size = " << QFileInfo(path + name + ".jpg").size();
 
         opStatus = SEND_FILE;
-        sendFlow->setFileName(path + name);
-        sendFlow->setFileBlockSize(name, sysPara.blockSize);
+        sendFlow->setFileName(path + name + ".jpg");
+        sendFlow->setFileBlockSize(name + ".jpg", sysPara.blockSize);
 
-        sendFlow->send(name, sysPara.blockIntervalTime, sysPara.repeatNum);
+        sendFlow->send(name + ".jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
         opStatus = IDLE;
     });
 
@@ -556,11 +569,12 @@ void MainWindow::initSignalSlot()
         QString name = QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss_zzz");
         cameraImageCapture->capture(path + name);
 
-        qDebug() << "Record time of the capture picture. file size = " << QFileInfo(path + name).size();
+        qDebug() << path + name + ".jpg : "
+                 << "Record time of the capture picture. file size = " << QFileInfo(path + name + ".jpg").size();
         opStatus = SEND_FILE;
-        sendFlow->setFileName(path + name);
-        sendFlow->setFileBlockSize(name, sysPara.blockSize);
-        sendFlow->send(name, sysPara.blockIntervalTime, sysPara.repeatNum);
+        sendFlow->setFileName(path + name + ".jpg");
+        sendFlow->setFileBlockSize(name + ".jpg", sysPara.blockSize);
+        sendFlow->send(name + ".jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
 
         // sendFlow->setFileName("cache/master/test16k.bin");
         // sendFlow->setFileBlockSize("test16k.bin", sysPara.blockSize);

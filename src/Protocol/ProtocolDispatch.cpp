@@ -19,18 +19,16 @@ void ProtocolDispatch::parserFrame(QByteArray data)
     int        headOffset;
     int        tailOffset;
 
-    qInfo()
-        << QThread::currentThreadId()
-        << " receive data length from tcp socket = " << data.size();
+    qInfo() << QThread::currentThreadId()
+            << " receive data length from tcp socket = " << data.size();
     frame.append(data);
 start:
     headOffset = -1;
     tailOffset = -1;
     headOffset = frame.indexOf(head);
     tailOffset = frame.indexOf(tail);
-    qInfo()
-        << QThread::currentThreadId()
-        << "Step 1";
+    qInfo() << QThread::currentThreadId()
+            << "Step 1";
     if(headOffset == -1 || tailOffset == -1)
     {
         // 一次TCP数据里没有帧头和帧尾, 等下一次进来数据再接着处理
@@ -50,20 +48,17 @@ start:
     }
     else
     {
-        qInfo()
-            << QThread::currentThreadId()
-            << "Step 2";
+        qInfo() << QThread::currentThreadId()
+                << "Step 2";
         command = frame.mid(headOffset, tailOffset + 8 - headOffset);
-        qInfo()
-            << QThread::currentThreadId()
-            << " receive full frame. frame length =  " << command.size();
+        qInfo() << QThread::currentThreadId()
+                << " receive full frame. frame length =  " << command.size();
         processCommand(command);
         frame = frame.mid(tailOffset + 8);
         if(frame.isEmpty() == false)
         {
-            qInfo()
-                << QThread::currentThreadId()
-                << " There are more than one frame in this frame. The length of the rest of frame = " << frame.size();
+            qInfo() << QThread::currentThreadId()
+                    << " There are more than one frame in this frame. The length of the rest of frame = " << frame.size();
             goto start;
         }
     }
@@ -126,13 +121,11 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
         // 1. 主机发送SET_FILE_DATA
         // 2. 作为从机，收到主机发送的文件块数据
         case UserProtocol::MasterSet::SET_FILE_DATA:
-            qInfo()
-                << QThread::currentThreadId()
-                << "----Before: emit slaveFileBlockReady";
+            qInfo() << QThread::currentThreadId()
+                    << "----Before: emit slaveFileBlockReady";
             emit slaveFileBlockReady(frame);
-            qInfo()
-                << QThread::currentThreadId()
-                << "----After: emit slaveFileBlockReady";
+            qInfo() << QThread::currentThreadId()
+                    << "----After: emit slaveFileBlockReady";
             break;
 
         // 3. 作为主机，收到从机发送的RESPONSE_FILE_DATA

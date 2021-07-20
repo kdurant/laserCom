@@ -113,5 +113,6 @@ private:
     QCameraViewfinder *  cameraViewfinder;    //摄像机取景器部件
     QCameraImageCapture *cameraImageCapture;  //截图
     QTimer *             cameraTimer;
+    QStringList          vedioList;
 };
 #endif  // MAINWINDOW_H

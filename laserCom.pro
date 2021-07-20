@@ -5,6 +5,7 @@ QT       += multimediawidgets
 
 DEFINES += LOG2FILE
 #DEFINES += QT_NO_DEBUG_OUTPUT
+#DEFINES += QT_NO_INFO_OUTPUT
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -46,7 +47,7 @@ INCLUDEPATH += ./src/transferFile/
 INCLUDEPATH += ./src/Protocol/
 INCLUDEPATH += ./src/media
 
-VERSION = 0.27
+VERSION = 0.28
 DEFINES += SOFT_VERSION=\"\\\"$$VERSION\\\"\"
 
 TARGET = laserCom$$VERSION

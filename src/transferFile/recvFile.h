@@ -63,6 +63,8 @@ public:
         recvList[fileName].fileSize        = fileSize;
         recvList[fileName].blockSize       = blockSize;
         recvList[fileName].fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
+
+        qInfo() << fileName << ": is created";
         recvList[fileName].blockStatus.clear();
         for(int i = 0; i < recvList[fileName].fileBlockNumber; i++)
             recvList[fileName].blockStatus.append(false);
@@ -92,11 +94,22 @@ public:
 
     void setBlockStatus(QString name, int index)
     {
+        if(index >= recvList[name].blockStatus.size())
+        {
+            qInfo() << "setBlockStatus(): index = " << index
+                    << ": vector size = " << recvList[name].blockStatus.size();
+        }
         recvList[name].blockStatus[index] = true;
     }
 
     bool getBlockStatus(QString name, int index)
     {
+        if(index >= recvList[name].blockStatus.size())
+        {
+            qInfo() << "getBlockStatus() : index = " << index
+                    << ": vector size = " << recvList[name].blockStatus.size();
+            return false;
+        }
         return recvList[name].blockStatus[index];
     }
 

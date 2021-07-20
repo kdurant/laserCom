@@ -266,6 +266,11 @@ void MainWindow::initSignalSlot()
     // 接收端发送的响应由于TCP流的关系，发送方会延迟收到，导致已经正确的数据，重复发送
     connect(recvFlow, &RecvFile::fileBlockReady, this, [this](QString fileName, quint32 blockNo, quint32 validLen, QByteArray &recvData) {
         qInfo() << fileName << " :receive blockNo = " << blockNo;
+        if(recvFlow->recvList.contains(fileName) == false)  // 没有接收到文件信息
+        {
+            qInfo() << "Create " << fileName << " failed";
+            return;
+        }
 
         if(!fileName.endsWith("jpg"))
         {
@@ -273,24 +278,30 @@ void MainWindow::initSignalSlot()
             dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
         }
 
+        qInfo() << "debug 1";
         qint64 offset = 0;
         if(validLen != recvFlow->getBlockSize(fileName))
             offset = blockNo * recvFlow->getBlockSize(fileName);
         else
             offset = blockNo * validLen;
 
+        qInfo() << "debug 2";
         // 如果数据块没有被标记，则将数据写入文件
         if(recvFlow->getBlockStatus(fileName, blockNo) == false)
         {
+            if(recvFlow->recvList[fileName].file->handle() == -1)  // 出现过没有新建文件的情况
+                return;
             qInfo() << fileName << " : write file block at : " << offset;
             recvFlow->recvList[fileName].file->seek(offset);
             recvFlow->recvList[fileName].file->write(recvData);
             recvFlow->setBlockStatus(fileName, blockNo);
         }
 
-        qInfo() << fileName
-                << ": recvFlow->getAllBlockNumber(fileName) = " << recvFlow->getAllBlockNumber(fileName)
-                << ", recvFlow->getBlockSuccessNumber(fileName) = " << recvFlow->getBlockSuccessNumber(fileName);
+        qInfo() << "debug 3";
+        // qInfo() << fileName
+        // << ": recvFlow->getAllBlockNumber(fileName) = " << recvFlow->getAllBlockNumber(fileName);
+        // qInfo() << fileName
+        // << ": recvFlow->getBlockSuccessNumber(fileName) = " << recvFlow->getBlockSuccessNumber(fileName);
         if(recvFlow->isRecvAllBlock(fileName))
         {
             if(recvFlow->recvList[fileName].file->handle() == -1)  // 文件已经关闭
@@ -557,6 +568,7 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_cameraOpenVideo, &QPushButton::pressed, this, [this]() {
+        vedioList.clear();
         cameraTimer->start(sysPara.cycleIntervalTime);
     });
 
@@ -568,18 +580,26 @@ void MainWindow::initSignalSlot()
         QString path = QDir::currentPath() + "/cache/master/";
         QString name = QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss_zzz");
         cameraImageCapture->capture(path + name);
+        vedioList.append(path + name + ".jpg");
 
         qDebug() << path + name + ".jpg : "
                  << "Record time of the capture picture. file size = " << QFileInfo(path + name + ".jpg").size();
+
+        if(!QFileInfo(vedioList.first()).isFile())
+            return;
+
+        qDebug() << "send " << vedioList.first();
+
         opStatus = SEND_FILE;
-        sendFlow->setFileName(path + name + ".jpg");
-        sendFlow->setFileBlockSize(name + ".jpg", sysPara.blockSize);
-        sendFlow->send(name + ".jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
+        sendFlow->setFileName(vedioList.first());
+        sendFlow->setFileBlockSize(Common::getFileNameFromFullPath(vedioList.first()), sysPara.blockSize);
+        sendFlow->send(Common::getFileNameFromFullPath(vedioList.first()), sysPara.blockIntervalTime, sysPara.repeatNum);
 
         // sendFlow->setFileName("cache/master/test16k.bin");
         // sendFlow->setFileBlockSize("test16k.bin", sysPara.blockSize);
         // sendFlow->send("test16k.bin", sysPara.blockIntervalTime, sysPara.repeatNum);
         opStatus = IDLE;
+        vedioList.removeFirst();
     });
 }
 

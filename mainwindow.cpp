@@ -531,15 +531,15 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_capturePic, &QPushButton::pressed, this, [this]() {
-        cameraImageCapture->capture(QDir::currentPath() + "/cache/master/tmpVedio");
-
-        QFile file("cache/master/tmpVedio.jpg");
+        QString path = QDir::currentPath() + "/cache/master/";
+        QString name = QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss_zzz");
+        cameraImageCapture->capture(path + name);
 
         opStatus = SEND_FILE;
-        sendFlow->setFileName("cache/master/tmpVedio.jpg");
-        sendFlow->setFileBlockSize("tmpVedio.jpg", sysPara.blockSize);
+        sendFlow->setFileName(path + name);
+        sendFlow->setFileBlockSize(name, sysPara.blockSize);
 
-        sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
+        sendFlow->send(name, sysPara.blockIntervalTime, sysPara.repeatNum);
         opStatus = IDLE;
     });
 
@@ -552,12 +552,15 @@ void MainWindow::initSignalSlot()
     });
 
     connect(cameraTimer, &QTimer::timeout, this, [this]() {
-        cameraImageCapture->capture(QDir::currentPath() + "/tmpVedio");
-        qDebug() << "Record time of the capture picture. file size = " << QFileInfo("cache/master/tmpVedio.jpg").size();
+        QString path = QDir::currentPath() + "/cache/master/";
+        QString name = QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss_zzz");
+        cameraImageCapture->capture(path + name);
+
+        qDebug() << "Record time of the capture picture. file size = " << QFileInfo(path + name).size();
         opStatus = SEND_FILE;
-        sendFlow->setFileName("tmpVedio.jpg");
-        sendFlow->setFileBlockSize("tmpVedio.jpg", sysPara.blockSize);
-        sendFlow->send("tmpVedio.jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
+        sendFlow->setFileName(path + name);
+        sendFlow->setFileBlockSize(name, sysPara.blockSize);
+        sendFlow->send(name, sysPara.blockIntervalTime, sysPara.repeatNum);
 
         // sendFlow->setFileName("cache/master/test16k.bin");
         // sendFlow->setFileBlockSize("test16k.bin", sysPara.blockSize);

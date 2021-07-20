@@ -274,8 +274,8 @@ void MainWindow::initSignalSlot()
         if(recvFlow->getBlockStatus(fileName, blockNo) == false)
         {
             qInfo() << fileName << " : write file block at : " << offset;
-            recvFlow->recvList[fileName].file.seek(offset);
-            recvFlow->recvList[fileName].file.write(recvData);
+            recvFlow->recvList[fileName].file->seek(offset);
+            recvFlow->recvList[fileName].file->write(recvData);
             recvFlow->setBlockStatus(fileName, blockNo);
         }
 
@@ -284,11 +284,11 @@ void MainWindow::initSignalSlot()
                 << ", recvFlow->getBlockSuccessNumber(fileName) = " << recvFlow->getBlockSuccessNumber(fileName);
         if(recvFlow->isRecvAllBlock(fileName))
         {
-            if(recvFlow->recvList[fileName].file.handle() == -1)  // 文件已经关闭
+            if(recvFlow->recvList[fileName].file->handle() == -1)  // 文件已经关闭
                 return;
 
             qInfo() << fileName << ": receive all file blocks, close file";
-            recvFlow->recvList[fileName].file.close();
+            recvFlow->recvList[fileName].file->close();
             recvFlow->eraseFileNode(fileName);
 
             ui->textEdit_recv->append("<font color=blue>[Receive] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");

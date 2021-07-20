@@ -37,7 +37,7 @@ public:
         int           fileBlockNumber;  // 文件块的数量
         int           blockSize;
         QVector<bool> blockStatus;
-        QFile         file;
+        QFile *       file;
     };
 
     enum RecvState
@@ -66,8 +66,9 @@ public:
         recvList[fileName].blockStatus.clear();
         for(int i = 0; i < recvList[fileName].fileBlockNumber; i++)
             recvList[fileName].blockStatus.append(false);
-        recvList[fileName].file.setFileName(recvList[fileName].storePath);
-        recvList[fileName].file.open(QIODevice::WriteOnly);
+        recvList[fileName].file = new QFile();
+        recvList[fileName].file->setFileName(recvList[fileName].storePath);
+        recvList[fileName].file->open(QIODevice::WriteOnly);
     }
     /**
     * @brief 本次接受到的文件名

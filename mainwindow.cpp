@@ -259,6 +259,7 @@ void MainWindow::initSignalSlot()
 
         if(!recvFlow->getFileName().endsWith("jpg"))
         {
+            qDebug() << "response to sendFileInfo()";
             dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
         }
     });
@@ -445,7 +446,11 @@ void MainWindow::initSignalSlot()
     connect(ui->btn_sendText, &QPushButton::pressed, this, [this]() {
         if(ui->textEdit_send->toPlainText().length() == 0)
             return;
-        QFile file("cache/master/tmpFile.chat");
+
+        QString path = QDir::currentPath() + "/cache/master/";
+        QString name = QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss_zzz");
+
+        QFile file(path + name + ".chat");
         file.open(QIODevice::WriteOnly);
         file.write(ui->textEdit_send->toPlainText().toStdString().data());
         file.close();
@@ -454,13 +459,13 @@ void MainWindow::initSignalSlot()
         ui->textEdit_recv->append(ui->textEdit_send->toPlainText());
 
         opStatus = SEND_FILE;
-        sendFlow->setFileName("cache/master/tmpFile.chat");
-        sendFlow->setFileBlockSize("tmpFile.chat", sysPara.blockSize);
+        sendFlow->setFileName(path + name + ".chat");
+        sendFlow->setFileBlockSize(name + ".chat", sysPara.blockSize);
 
-        if(sendFlow->send("tmpFile.chat", sysPara.blockIntervalTime, sysPara.repeatNum) == false)
+        if(sendFlow->send(name + ".chat", sysPara.blockIntervalTime, sysPara.repeatNum) == false)
             QMessageBox::warning(this, "warning", "信息文件失败");
-
-        ui->textEdit_send->clear();
+        else
+            ui->textEdit_send->clear();
         opStatus = IDLE;
     });
 
@@ -582,8 +587,8 @@ void MainWindow::initSignalSlot()
         cameraImageCapture->capture(path + name);
         vedioList.append(path + name + ".jpg");
 
-        qDebug() << path + name + ".jpg : "
-                 << "Record time of the capture picture. file size = " << QFileInfo(path + name + ".jpg").size();
+        qDebug() << "Record time of the capture picture. file size = " << QFileInfo(path + name + ".jpg").size()
+                 << ".  " << path + name + ".jpg";
 
         if(!QFileInfo(vedioList.first()).isFile())
             return;
@@ -593,7 +598,7 @@ void MainWindow::initSignalSlot()
         opStatus = SEND_FILE;
         sendFlow->setFileName(vedioList.first());
         sendFlow->setFileBlockSize(Common::getFileNameFromFullPath(vedioList.first()), sysPara.blockSize);
-        sendFlow->send(Common::getFileNameFromFullPath(vedioList.first()), sysPara.blockIntervalTime, sysPara.repeatNum);
+        sendFlow->send(Common::getFileNameFromFullPath(vedioList.first()), sysPara.blockIntervalTime, 1);
 
         // sendFlow->setFileName("cache/master/test16k.bin");
         // sendFlow->setFileBlockSize("test16k.bin", sysPara.blockSize);

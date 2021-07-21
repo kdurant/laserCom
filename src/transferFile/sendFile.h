@@ -101,6 +101,7 @@ public:
 private:
     QByteArray              recvData;
     QMap<QString, FileInfo> sendList;
+    bool                    timeOutFlag{false};
 
 signals:
     void sendDataReady(qint32 command, QByteArray &data);  // 需要发送的数据已经准备好

@@ -115,7 +115,13 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
         //3. 作为主机，收到从机发送的RESPONSE_FILE_INFO
         case UserProtocol::SlaveUp::RESPONSE_FILE_INFO:
             transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
+            qInfo()
+                << QThread::currentThreadId()
+                << "++++Before: emit masterFileInfoReady";
             emit masterFileInfoReady(transmitFrame);
+            qInfo()
+                << QThread::currentThreadId()
+                << "++++After: emit masterFileInfoReady";
             break;
 
         // 1. 主机发送SET_FILE_DATA

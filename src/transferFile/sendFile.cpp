@@ -18,6 +18,9 @@ bool SendFile::sendFileInfo(QString name, int repeatNum)
     frame.append(Common::int2ba(sendList[name].blockSize));
 
 send_frame:
+    qDebug() << name << ": sendFileInfo()"
+             << ", repeatNum = " << repeatNum
+             << ", sendCnt = " << sendCnt;
     emit sendDataReady(UserProtocol::SET_FILE_INFO, frame);
 
     if(name.endsWith("jpg"))
@@ -25,29 +28,36 @@ send_frame:
 
     QEventLoop waitLoop;  // 等待响应数据，或者1000ms超时
     connect(this, &SendFile::responseDataReady, &waitLoop, &QEventLoop::quit);
-    QTimer::singleShot(100, &waitLoop, &QEventLoop::quit);
+
+    QTimer timer;
+    timer.start(500);
+
+    connect(&timer, &QTimer::timeout, this, [&]() {
+        if(waitLoop.isRunning())
+        {
+            timeOutFlag = true;
+            waitLoop.quit();
+        }
+    });
     waitLoop.exec();
+    timer.stop();
 
-    // QElapsedTimer time;
-    // time.start();
-    // while(time.elapsed() < 100)
-    // {
-    // QCoreApplication::processEvents();
-    // }
+    if(timeOutFlag)
+    {
+        qDebug() << "sendFileInfo() timeout";
+        timeOutFlag = false;
+    }
 
-    if(recvData.size() == 0)
-        emit errorDataReady("SET_FILE_INFO:没有收到接收机响应");
+    if(frame == recvData)
+    {
+        qDebug() << name << "sendFileInfo() success:  " << sendCnt;
+        return true;
+    }
     else
     {
-        if(frame == recvData)
-        {
-            qDebug() << "sendFileInfo() success:  " << sendCnt;
-            return true;
-        }
-        else
-            emit errorDataReady("SET_FILE_INFO:收到的接收机响应不正确");
+        qDebug() << name << ": sendFileInfo() __ recvData.size()" << recvData.size()
+                 << "\nsendFileInfo() failed:  " << sendCnt;
     }
-    qDebug() << "sendFileInfo() failed:  " << sendCnt;
 
     if(++sendCnt < repeatNum)
         goto send_frame;

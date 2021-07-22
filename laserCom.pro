@@ -47,7 +47,7 @@ INCLUDEPATH += ./src/transferFile/
 INCLUDEPATH += ./src/Protocol/
 INCLUDEPATH += ./src/media
 
-VERSION = 0.28
+VERSION = 0.29
 DEFINES += SOFT_VERSION=\"\\\"$$VERSION\\\"\"
 
 TARGET = laserCom$$VERSION

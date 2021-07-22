@@ -94,9 +94,7 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
             break;
 
         case UserProtocol::MasterSet::SET_TEST_PATTERN:
-            qInfo()
-                << QThread::currentThreadId()
-                << "received MasterSet::SET_TEST_PATTERN";
+            emit testPatternReady();
             break;
 
         // 1. 主机发送SET_FILE_INFO

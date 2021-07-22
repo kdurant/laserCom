@@ -476,6 +476,8 @@ void MainWindow::initSignalSlot()
             return;
         }
 
+        int interval = ui->lineEdit_testFrameInterval->text().toInt();
+
         QByteArray data    = QByteArray(1411, 0x11);
         int        number  = ui->lineEdit_testFrameNumber->text().toInt();
         int        sendCnt = 0;
@@ -488,6 +490,8 @@ void MainWindow::initSignalSlot()
                 ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
                                            QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
                                            QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
+                Common::sleepWithoutBlock(interval);
+                QCoreApplication::processEvents();
             }
             return;
         }
@@ -501,12 +505,18 @@ void MainWindow::initSignalSlot()
             ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
                                        QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
                                        QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
-            Common::sleepWithoutBlock(5);
+            Common::sleepWithoutBlock(interval);
+            QCoreApplication::processEvents();
         }
     });
 
     connect(ui->btn_stopTest, &QPushButton::pressed, this, [this]() {
         testStatus = false;
+    });
+
+    connect(dispatch, &ProtocolDispatch::testPatternReady, this, [this]() {
+        recvByteCnt += 1446;
+        statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
     });
 
     //********************语音相关操作*************************************
@@ -612,6 +622,15 @@ void MainWindow::userStatusBar()
 {
     statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
     ui->statusbar->addPermanentWidget(statusLabel);
+
+    QPushButton *btn_clearStatus = new QPushButton();
+    btn_clearStatus->setText("复位计数值");
+    ui->statusbar->addPermanentWidget(btn_clearStatus);
+
+    connect(btn_clearStatus, &QPushButton::pressed, this, [this]() {
+        recvByteCnt = 0;
+        statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
+    });
 
     QLabel *softwareLabel = new QLabel();
     softwareLabel->setText("软件版本：" + QString(SOFT_VERSION));

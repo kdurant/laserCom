@@ -193,6 +193,7 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum)
         if(isSendAllBlock(name))
             break;
     }
+    emit successBlockNumber(getBlockSuccessNumber(name));
     qDebug() << "---------------the end of sending file";
 
     return true;

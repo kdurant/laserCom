@@ -5,7 +5,8 @@
 #include <QTime>
 #include <QMessageBox>
 
-const QString logFilePath = "debug.log";
+//const QString logFilePath = "debug.log";
+const QString logFilePath = "log/" + QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss") + ".log";
 // redirect qDebug to file
 void customMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {

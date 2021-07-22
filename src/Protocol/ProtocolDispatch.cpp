@@ -19,16 +19,12 @@ void ProtocolDispatch::parserFrame(QByteArray data)
     int        headOffset;
     int        tailOffset;
 
-    qInfo() << QThread::currentThreadId()
-            << " receive data length from tcp socket = " << data.size();
     frame.append(data);
 start:
     headOffset = -1;
     tailOffset = -1;
     headOffset = frame.indexOf(head);
     tailOffset = frame.indexOf(tail);
-    qInfo() << QThread::currentThreadId()
-            << "Step 1";
     if(headOffset == -1 || tailOffset == -1)
     {
         // 一次TCP数据里没有帧头和帧尾, 等下一次进来数据再接着处理
@@ -48,11 +44,10 @@ start:
     }
     else
     {
-        qInfo() << QThread::currentThreadId()
-                << "Step 2";
         command = frame.mid(headOffset, tailOffset + 8 - headOffset);
         qInfo() << QThread::currentThreadId()
-                << " receive full frame. frame length =  " << command.size();
+                << "Frame size = " << frame.size()
+                << ". Command size  =  " << command.size();
         processCommand(command);
         frame = frame.mid(tailOffset + 8);
         if(frame.isEmpty() == false)
@@ -72,8 +67,9 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
     QByteArray expect_md5 = QCryptographicHash::hash(validData, QCryptographicHash::Md5);
     if(recv_md5 != expect_md5)
     {
-        QString error = "Checksum Error!";
-        emit    errorDataReady(error);
+        QString error = "processCommand() Checksum Error!";
+        qInfo() << error;
+        emit errorDataReady(error);
         return;
     }
 
@@ -87,13 +83,14 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
             transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
             transmitFrame = transmitFrame.mid(6, 4);
 
-            qInfo()
-                << QThread::currentThreadId()
-                << "emit heartBeatReady";
+            qInfo() << QThread::currentThreadId()
+                    << "emit heartBeatReady";
             emit heartBeatReady(Common::ba2int(transmitFrame));
             break;
 
         case UserProtocol::MasterSet::SET_TEST_PATTERN:
+            qInfo() << QThread::currentThreadId()
+                    << "emit testPatternReady";
             emit testPatternReady();
             break;
 
@@ -101,13 +98,11 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
         // 2. 作为从机，收到主机发送的SET_FILE_INFO命令
         case UserProtocol::MasterSet::SET_FILE_INFO:
             transmitFrame = frame.mid(FrameField::DATA_POS + FrameField::DATA_LEN, data_len);
-            qInfo()
-                << QThread::currentThreadId()
-                << "++++Before: emit slaveFileInfoReady";
+            qInfo() << QThread::currentThreadId()
+                    << "++++Before: emit slaveFileInfoReady";
             emit slaveFileInfoReady(transmitFrame);
-            qInfo()
-                << QThread::currentThreadId()
-                << "++++After: emit slaveFileInfoReady";
+            qInfo() << QThread::currentThreadId()
+                    << "++++After: emit slaveFileInfoReady";
             break;
 
         //3. 作为主机，收到从机发送的RESPONSE_FILE_INFO
@@ -140,7 +135,8 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
 
         default:
             QString error = "Undefined command received!";
-            emit    errorDataReady(error);
+            qInfo() << error;
+            emit errorDataReady(error);
             break;
     }
 }

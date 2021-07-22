@@ -112,6 +112,8 @@ void MainWindow::saveParameter()
 void MainWindow::initUI()
 {
     setWindowTitle("激光通信测试软件");
+    ui->textEdit_recv->moveCursor(QTextCursor::End);
+    ui->textEdit_send->moveCursor(QTextCursor::End);
     for(auto i : at.queryCommond)
     {
         ui->comboBox_query->addItem(i.context);
@@ -259,7 +261,7 @@ void MainWindow::initSignalSlot()
 
         if(!recvFlow->getFileName().endsWith("jpg"))
         {
-            qDebug() << "response to sendFileInfo()";
+            qDebug() << "response sendFileInfo() to " << recvFlow->getFileName();
             dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
         }
     });
@@ -342,7 +344,7 @@ void MainWindow::initSignalSlot()
             {
                 ui->textEdit_recv->append("received file: " + path + ".");
                 playlist->clear();
-                playlist->addMedia(QUrl::fromLocalFile(recvFlow->getFileName()));
+                playlist->addMedia(QUrl::fromLocalFile(path));
                 player->play();
             }
             else
@@ -431,16 +433,23 @@ void MainWindow::initSignalSlot()
             QMessageBox::warning(this, "warning", "请检查TCP是否连接");
             return;
         }
+        ui->progressBar_sendFile->setValue(0);
+        ui->progressBar_sendFile->setMaximum(qCeil(QFileInfo(filePath).size() / (qreal)sysPara.blockSize) - 1);
+
         sendFlow->setFileName(filePath);
         filePath = Common::getFileNameFromFullPath(filePath);
         sendFlow->setFileBlockSize(filePath, sysPara.blockSize);
         if(sendFlow->send(filePath, sysPara.blockIntervalTime, sysPara.repeatNum) == false)
-            QMessageBox::warning(this, "warning", "发送文件失败");
+            QMessageBox::warning(this, "warning", "文件发送失败");
 
         ui->textEdit_recv->append("<font color=red>[Sender] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
         ui->textEdit_recv->append(filePath);
 
         opStatus = IDLE;
+    });
+
+    connect(sendFlow, &SendFile::successBlockNumber, this, [this](int num) {
+        ui->progressBar_sendFile->setValue(num);
     });
 
     connect(ui->btn_sendText, &QPushButton::pressed, this, [this]() {
@@ -463,7 +472,7 @@ void MainWindow::initSignalSlot()
         sendFlow->setFileBlockSize(name + ".chat", sysPara.blockSize);
 
         if(sendFlow->send(name + ".chat", sysPara.blockIntervalTime, sysPara.repeatNum) == false)
-            QMessageBox::warning(this, "warning", "信息文件失败");
+            QMessageBox::warning(this, "warning", "信息发送失败");
         else
             ui->textEdit_send->clear();
         opStatus = IDLE;
@@ -516,7 +525,10 @@ void MainWindow::initSignalSlot()
 
     connect(dispatch, &ProtocolDispatch::testPatternReady, this, [this]() {
         recvByteCnt += 1446;
-        statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
+        // statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
+        statusLabel->setText("接收计数：" + QString::number(recvByteCnt) + "Bytes/" +
+                             QString::number(recvByteCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
+                             QString::number(recvByteCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
     });
 
     //********************语音相关操作*************************************
@@ -630,6 +642,7 @@ void MainWindow::userStatusBar()
     connect(btn_clearStatus, &QPushButton::pressed, this, [this]() {
         recvByteCnt = 0;
         statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
+        ui->textEdit_recv->clear();
     });
 
     QLabel *softwareLabel = new QLabel();

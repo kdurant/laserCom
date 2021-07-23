@@ -53,7 +53,7 @@ public:
      * @brief sendFileInfo, 从接收机发送0x20命令
      * @return
      */
-    bool sendFileInfo(QString name, int repeatNum);
+    bool sendFileInfo(QString name, int repeatNum, char mode);
 
     /**
      * @brief splitData, 将文件分割成指定大小的页，并按照格式打包
@@ -64,7 +64,7 @@ public:
 
     bool sendFileBlock(QByteArray &fileBlock);
 
-    bool send(QString name, int blockInterval, int repeatNum);
+    bool send(QString name, int blockInterval, int repeatNum, char mode);
 
     void initBlockStatus(QString name)
     {

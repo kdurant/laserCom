@@ -114,5 +114,6 @@ private:
     QCameraImageCapture *cameraImageCapture;  //截图
     QTimer *             cameraTimer;
     QStringList          vedioList;
+    bool                 isSendVideo{false};
 };
 #endif  // MAINWINDOW_H

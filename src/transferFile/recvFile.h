@@ -32,6 +32,7 @@ public:
 
     struct FileInfo
     {
+        char          mode;
         QString       storePath;  // 文件实际路径
         int           fileSize;
         int           fileBlockNumber;  // 文件块的数量
@@ -54,15 +55,25 @@ public:
 
     void setFileInfo(QByteArray &data)
     {
-        fileName = data.mid(0, data.indexOf('?'));
+        int offset = data.indexOf('?');
+        fileName   = data.mid(0, offset);
 
-        int fileSize  = Common::ba2int(data.mid(data.indexOf('?') + 1, 4));
-        int blockSize = Common::ba2int(data.mid(data.lastIndexOf('?') + 1, 4));
+        offset++;
+        int fileSize = Common::ba2int(data.mid(offset, 4));
+        offset += 4;
+
+        offset++;
+        int blockSize = Common::ba2int(data.mid(offset, 4));
+        offset += 4;
+
+        offset++;
+        char mode = data.mid(offset, 1)[0];
 
         recvList[fileName].storePath       = "cache/slave/" + fileName;
         recvList[fileName].fileSize        = fileSize;
         recvList[fileName].blockSize       = blockSize;
         recvList[fileName].fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
+        recvList[fileName].mode            = mode;
 
         qInfo() << fileName << ": is created";
         recvList[fileName].blockStatus.clear();

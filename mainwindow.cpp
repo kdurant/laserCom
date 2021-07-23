@@ -259,7 +259,7 @@ void MainWindow::initSignalSlot()
         recvFlow->setFileInfo(data);
         opStatus = RECV_FILE;
 
-        if(!recvFlow->getFileName().endsWith("jpg"))
+        if(recvFlow->recvList[recvFlow->getFileName()].mode == 'y')
         {
             qDebug() << "response sendFileInfo() to " << recvFlow->getFileName();
             dispatch->encode(UserProtocol::RESPONSE_FILE_INFO, data);
@@ -275,7 +275,7 @@ void MainWindow::initSignalSlot()
             return;
         }
 
-        if(!fileName.endsWith("jpg"))
+        if(recvFlow->recvList[recvFlow->getFileName()].mode == 'y')
         {
             QByteArray frame = recvFlow->packResponse(fileName, blockNo, validLen);
             dispatch->encode(UserProtocol::RESPONSE_FILE_DATA, frame);
@@ -439,7 +439,9 @@ void MainWindow::initSignalSlot()
         sendFlow->setFileName(filePath);
         filePath = Common::getFileNameFromFullPath(filePath);
         sendFlow->setFileBlockSize(filePath, sysPara.blockSize);
-        if(sendFlow->send(filePath, sysPara.blockIntervalTime, sysPara.repeatNum) == false)
+
+        char mode = isSendVideo ? 'n' : 'y';
+        if(sendFlow->send(filePath, sysPara.blockIntervalTime, sysPara.repeatNum, mode) == false)
             QMessageBox::warning(this, "warning", "文件发送失败");
 
         ui->textEdit_recv->append("<font color=red>[Sender] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
@@ -471,7 +473,8 @@ void MainWindow::initSignalSlot()
         sendFlow->setFileName(path + name + ".chat");
         sendFlow->setFileBlockSize(name + ".chat", sysPara.blockSize);
 
-        if(sendFlow->send(name + ".chat", sysPara.blockIntervalTime, sysPara.repeatNum) == false)
+        char mode = isSendVideo ? 'n' : 'y';
+        if(sendFlow->send(name + ".chat", sysPara.blockIntervalTime, sysPara.repeatNum, mode) == false)
             QMessageBox::warning(this, "warning", "信息发送失败");
         else
             ui->textEdit_send->clear();
@@ -550,7 +553,8 @@ void MainWindow::initSignalSlot()
         sendFlow->setFileName(fileName);
         sendFlow->setFileBlockSize(fileName, sysPara.blockSize);
 
-        sendFlow->send(fileName, sysPara.blockIntervalTime, sysPara.repeatNum);
+        char mode = isSendVideo ? 'n' : 'y';
+        sendFlow->send(fileName, sysPara.blockIntervalTime, sysPara.repeatNum, mode);
         opStatus = IDLE;
     });
 
@@ -590,16 +594,19 @@ void MainWindow::initSignalSlot()
         sendFlow->setFileName(path + name + ".jpg");
         sendFlow->setFileBlockSize(name + ".jpg", sysPara.blockSize);
 
-        sendFlow->send(name + ".jpg", sysPara.blockIntervalTime, sysPara.repeatNum);
+        char mode = isSendVideo ? 'n' : 'y';
+        sendFlow->send(name + ".jpg", sysPara.blockIntervalTime, sysPara.repeatNum, mode);
         opStatus = IDLE;
     });
 
     connect(ui->btn_cameraOpenVideo, &QPushButton::pressed, this, [this]() {
         vedioList.clear();
         cameraTimer->start(sysPara.cycleIntervalTime);
+        isSendVideo = true;
     });
 
     connect(ui->btn_cameraCloseVideo, &QPushButton::pressed, this, [this]() {
+        isSendVideo = false;
         cameraTimer->stop();
     });
 
@@ -620,7 +627,9 @@ void MainWindow::initSignalSlot()
         opStatus = SEND_FILE;
         sendFlow->setFileName(vedioList.first());
         sendFlow->setFileBlockSize(Common::getFileNameFromFullPath(vedioList.first()), sysPara.blockSize);
-        sendFlow->send(Common::getFileNameFromFullPath(vedioList.first()), sysPara.blockIntervalTime, 1);
+
+        char mode = isSendVideo ? 'n' : 'y';
+        sendFlow->send(Common::getFileNameFromFullPath(vedioList.first()), sysPara.blockIntervalTime, 1, mode);
 
         // sendFlow->setFileName("cache/master/test16k.bin");
         // sendFlow->setFileBlockSize("test16k.bin", sysPara.blockSize);

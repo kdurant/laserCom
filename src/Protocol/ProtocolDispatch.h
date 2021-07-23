@@ -41,7 +41,7 @@ public:
     ~ProtocolDispatch()
     {
     }
-    void processCommand(QByteArray &frame);
+    bool processCommand(QByteArray &frame);
 
     static uint32_t getCommand(QByteArray &data)
     {

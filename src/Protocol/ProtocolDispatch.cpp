@@ -19,6 +19,8 @@ void ProtocolDispatch::parserFrame(QByteArray data)
     int        headOffset;
     int        tailOffset;
 
+    qInfo() << QThread::currentThreadId()
+            << "tcp socket data size = " << data.size();
     frame.append(data);
 start:
     headOffset = -1;
@@ -42,13 +44,23 @@ start:
             return;
         }
     }
+    else if(headOffset >= tailOffset)
+    {  // 异常情况下，某数据帧头丢失，剩余数据与接下来的数据帧
+        frame = frame.mid(headOffset);
+        qInfo() << QThread::currentThreadId()
+                << "There is frame that losts head.";
+    }
     else
     {
         command = frame.mid(headOffset, tailOffset + 8 - headOffset);
         qInfo() << QThread::currentThreadId()
                 << "Frame size = " << frame.size()
                 << ". Command size  =  " << command.size();
-        processCommand(command);
+        if(processCommand(command) == false)
+        {
+            qInfo() << QThread::currentThreadId()
+                    << "Received wrong command!";
+        }
         frame = frame.mid(tailOffset + 8);
         if(frame.isEmpty() == false)
         {
@@ -59,7 +71,7 @@ start:
     }
 }
 
-void ProtocolDispatch::processCommand(QByteArray &frame)
+bool ProtocolDispatch::processCommand(QByteArray &frame)
 {
     int        len        = frame.size();
     QByteArray validData  = frame.mid(0, len - 24);
@@ -70,7 +82,7 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
         QString error = "processCommand() Checksum Error!";
         qInfo() << error;
         emit errorDataReady(error);
-        return;
+        return false;
     }
 
     uint32_t   command  = getCommand(frame);
@@ -139,6 +151,7 @@ void ProtocolDispatch::processCommand(QByteArray &frame)
             emit errorDataReady(error);
             break;
     }
+    return true;
 }
 
 void ProtocolDispatch::encode(qint32 command, QByteArray &data)

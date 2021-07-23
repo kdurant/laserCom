@@ -166,6 +166,16 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum, char mode)
     }
 
     sendCnt = 0;
+    if(mode == 'n')
+    {
+        for(int i = 0; i < fileBlockNumber; i++)
+        {
+            qDebug() << "sendCnt =  " << sendCnt << "; i = " << i;
+            emit sendDataReady(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+        }
+        return true;
+    }
+
     for(int i = 0, sendCnt = 0; i < fileBlockNumber && sendCnt < repeatNum; i++)
     {
         if(getBlockStatus(name, i) == false)
@@ -178,12 +188,6 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum, char mode)
             QTimer::singleShot(blockInterval, &waitLoop, &QEventLoop::quit);
             waitLoop.exec();
 
-            // QElapsedTimer time;
-            // time.start();
-            // while(time.elapsed() < blockInterval)
-            // {
-            // QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-            // }
             emit successBlockNumber(getBlockSuccessNumber(name));
         }
 

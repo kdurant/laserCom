@@ -66,7 +66,6 @@ public:
         int blockSize = Common::ba2int(data.mid(offset, 4));
         offset += 4;
 
-        offset++;
         char mode = data.mid(offset, 1)[0];
 
         recvList[fileName].storePath       = "cache/slave/" + fileName;
@@ -75,7 +74,8 @@ public:
         recvList[fileName].fileBlockNumber = qCeil(fileSize / (qreal)blockSize);
         recvList[fileName].mode            = mode;
 
-        qInfo() << fileName << ": is created";
+        qInfo() << fileName << ": is created."
+                << " mode = " << mode;
         recvList[fileName].blockStatus.clear();
         for(int i = 0; i < recvList[fileName].fileBlockNumber; i++)
             recvList[fileName].blockStatus.append(false);

@@ -433,6 +433,12 @@ void MainWindow::initSignalSlot()
             QMessageBox::warning(this, "warning", "请检查TCP是否连接");
             return;
         }
+        char mode = isSendVideo ? 'n' : 'y';
+        if(mode == 'n')
+        {
+            vedioList.append(filePath);
+            return;
+        }
         ui->progressBar_sendFile->setValue(0);
         ui->progressBar_sendFile->setMaximum(qCeil(QFileInfo(filePath).size() / (qreal)sysPara.blockSize) - 1);
 
@@ -440,7 +446,6 @@ void MainWindow::initSignalSlot()
         filePath = Common::getFileNameFromFullPath(filePath);
         sendFlow->setFileBlockSize(filePath, sysPara.blockSize);
 
-        char mode = isSendVideo ? 'n' : 'y';
         if(sendFlow->send(filePath, sysPara.blockIntervalTime, sysPara.repeatNum, mode) == false)
             QMessageBox::warning(this, "warning", "文件发送失败");
 
@@ -600,6 +605,8 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_cameraOpenVideo, &QPushButton::pressed, this, [this]() {
+        ui->btn_cameraOpenVideo->setEnabled(false);
+        ui->btn_cameraCloseVideo->setEnabled(true);
         vedioList.clear();
         cameraTimer->start(sysPara.cycleIntervalTime);
         isSendVideo = true;
@@ -608,6 +615,9 @@ void MainWindow::initSignalSlot()
     connect(ui->btn_cameraCloseVideo, &QPushButton::pressed, this, [this]() {
         isSendVideo = false;
         cameraTimer->stop();
+
+        ui->btn_cameraOpenVideo->setEnabled(true);
+        ui->btn_cameraCloseVideo->setEnabled(false);
     });
 
     connect(cameraTimer, &QTimer::timeout, this, [this]() {

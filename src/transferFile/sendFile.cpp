@@ -142,7 +142,7 @@ int SendFile::splitData(QString name, QVector<QByteArray>& allFileBlock)
  * @param name, 这里只需要指定文件名，不需要全部路径
  * @param blockInterval
  * @param repeatNum
- * @param mode,
+ * @param mode, 'y', 会进行重发; 'n'，不会进行重发
  * @return
  */
 bool SendFile::send(QString name, int blockInterval, int repeatNum, char mode)
@@ -172,6 +172,11 @@ bool SendFile::send(QString name, int blockInterval, int repeatNum, char mode)
         {
             qDebug() << "sendCnt =  " << sendCnt << "; i = " << i;
             emit sendDataReady(UserProtocol::SET_FILE_DATA, allFileBlock[i]);
+
+            QEventLoop waitLoop;  // 正常情况下大概需要30ms
+            connect(this, &SendFile::receivedNewBlock, &waitLoop, &QEventLoop::quit);
+            QTimer::singleShot(blockInterval, &waitLoop, &QEventLoop::quit);
+            waitLoop.exec();
         }
         return true;
     }

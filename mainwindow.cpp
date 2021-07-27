@@ -568,8 +568,29 @@ void MainWindow::initSignalSlot()
     });
 
     //********************视频相关操作*************************************
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
+        if(index == 2)
+        {
+            if(camera->state() != QCamera::ActiveState)
+            {
+                camera->start();
+
+                QList<QCameraViewfinderSettings> ViewSets = camera->supportedViewfinderSettings();
+                int                              i        = 0;
+                qDebug() << "viewfinderResolutions sizes.len = " << ViewSets.length();
+
+                for(i = 0; i < ViewSets.length(); i++)
+                {
+                    if(ViewSets[i].resolution() == QSize(640, 480))
+                        break;
+                }
+                camera->setViewfinderSettings(ViewSets[i--]);
+            }
+        }
+    });
     connect(ui->btn_cameraOpen, &QPushButton::pressed, this, [this]() {
         camera->start();
+
         QList<QCameraViewfinderSettings> ViewSets = camera->supportedViewfinderSettings();
         int                              i        = 0;
         qDebug() << "viewfinderResolutions sizes.len = " << ViewSets.length();
@@ -599,7 +620,8 @@ void MainWindow::initSignalSlot()
         sendFlow->setFileName(path + name + ".jpg");
         sendFlow->setFileBlockSize(name + ".jpg", sysPara.blockSize);
 
-        char mode = isSendVideo ? 'n' : 'y';
+        // char mode = isSendVideo ? 'n' : 'y';
+        char mode = 'n';
         sendFlow->send(name + ".jpg", sysPara.blockIntervalTime, sysPara.repeatNum, mode);
         opStatus = IDLE;
     });
@@ -630,9 +652,12 @@ void MainWindow::initSignalSlot()
                  << ".  " << path + name + ".jpg";
 
         if(!QFileInfo(vedioList.first()).isFile())
+        {
+            qDebug() << "xxxxxxxxxxxxxx" << vedioList.first();
             return;
+        }
 
-        qDebug() << "send " << vedioList.first();
+        qDebug() << "send " << vedioList.first() << "size = " << QFileInfo(vedioList.first()).size();
 
         opStatus = SEND_FILE;
         sendFlow->setFileName(vedioList.first());

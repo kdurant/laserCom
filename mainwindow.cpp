@@ -45,6 +45,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(dispatch, &ProtocolDispatch::readyRead, dispatch, &ProtocolDispatch::parserFrame);
     thread->start();
 
+    testPatternTimer = new QTimer();
+    testPatternTimer->setInterval(1000);
+
     initParameter();
     initUI();
     initSignalSlot();
@@ -532,11 +535,21 @@ void MainWindow::initSignalSlot()
     });
 
     connect(dispatch, &ProtocolDispatch::testPatternReady, this, [this]() {
+        if(testPatternTimeout)
+        {
+            recvByteCnt = 0;
+        }
+        testPatternTimeout = false;
+        testPatternTimer->start();
         recvByteCnt += 1446;
         // statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
         statusLabel->setText("接收计数：" + QString::number(recvByteCnt) + "Bytes/" +
                              QString::number(recvByteCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
                              QString::number(recvByteCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
+    });
+    connect(testPatternTimer, &QTimer::timeout, this, [this]() {
+        testPatternTimeout = true;
+        testPatternTimer->stop();
     });
 
     //********************语音相关操作*************************************

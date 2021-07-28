@@ -115,5 +115,8 @@ private:
     QTimer *             cameraTimer;
     QStringList          vedioList;
     bool                 isSendVideo{false};
+
+    QTimer *testPatternTimer;
+    bool    testPatternTimeout{true};
 };
 #endif  // MAINWINDOW_H

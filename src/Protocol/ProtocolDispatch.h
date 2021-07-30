@@ -92,7 +92,7 @@ signals:
      * @brief 协议相关的信号
      */
     void heartBeatReady(quint32 number);
-    void testPatternReady(void);
+    void testPatternReady(int number);
     void slaveFileInfoReady(QByteArray data);    // 从机收到主机设置的文件信息
     void masterFileInfoReady(QByteArray data);   // 主机收到从机对文件信息的应答
     void slaveFileBlockReady(QByteArray data);   // 从机收到主机设置的文件块数据

@@ -189,7 +189,6 @@ void MainWindow::initSignalSlot()
         dispatch->setNewData(buffer);
 
         testStatus = true;
-        //                statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
     });
 
     connect(tcpClient, &QTcpSocket::disconnected, this, [this]() {
@@ -534,18 +533,27 @@ void MainWindow::initSignalSlot()
         testStatus = false;
     });
 
-    connect(dispatch, &ProtocolDispatch::testPatternReady, this, [this]() {
+    connect(dispatch, &ProtocolDispatch::testPatternReady, this, [this](int number) {
         if(testPatternTimeout)
         {
-            recvByteCnt = 0;
+            recvRightCnt   = 0;
+            recvWrongCnt   = 0;
+            recvWrongFrame = 0;
         }
         testPatternTimeout = false;
         testPatternTimer->start();
-        recvByteCnt += 1446;
-        // statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
-        statusLabel->setText("接收计数：" + QString::number(recvByteCnt) + "Bytes/" +
-                             QString::number(recvByteCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
-                             QString::number(recvByteCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
+        if(number == 1446)
+            recvRightCnt += number;
+        else
+        {
+            recvWrongCnt += number;
+            recvWrongFrame++;
+        }
+        statusLabel->setText(QString("接收正确数据: %1Bytes/%2Mb.校验错误包:%3, 错误包字节:%4")
+                                 .arg(recvRightCnt)
+                                 .arg(QString::number(recvRightCnt / 1024.0 / 1024, 10, 3))
+                                 .arg(recvWrongFrame)
+                                 .arg(recvWrongCnt));
     });
     connect(testPatternTimer, &QTimer::timeout, this, [this]() {
         testPatternTimeout = true;
@@ -689,7 +697,7 @@ void MainWindow::initSignalSlot()
 
 void MainWindow::userStatusBar()
 {
-    statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
+    statusLabel->setText("接收计数：" + QString::number(recvRightCnt).leftJustified(24, ' '));
     ui->statusbar->addPermanentWidget(statusLabel);
 
     QPushButton *btn_clearStatus = new QPushButton();
@@ -697,8 +705,8 @@ void MainWindow::userStatusBar()
     ui->statusbar->addPermanentWidget(btn_clearStatus);
 
     connect(btn_clearStatus, &QPushButton::pressed, this, [this]() {
-        recvByteCnt = 0;
-        statusLabel->setText("接收计数：" + QString::number(recvByteCnt).leftJustified(24, ' '));
+        recvRightCnt = 0;
+        statusLabel->setText("接收计数：" + QString::number(recvRightCnt).leftJustified(24, ' '));
         ui->textEdit_recv->clear();
     });
 

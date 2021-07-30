@@ -81,7 +81,7 @@ bool ProtocolDispatch::processCommand(QByteArray &frame)
     {
         QString error = "processCommand() Checksum Error!";
         qInfo() << error;
-        emit errorDataReady(error);
+        emit testPatternReady(len);
         return false;
     }
 
@@ -103,7 +103,7 @@ bool ProtocolDispatch::processCommand(QByteArray &frame)
         case UserProtocol::MasterSet::SET_TEST_PATTERN:
             qInfo() << QThread::currentThreadId()
                     << "emit testPatternReady";
-            emit testPatternReady();
+            emit testPatternReady(1446);
             break;
 
         // 1. 主机发送SET_FILE_INFO

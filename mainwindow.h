@@ -97,7 +97,9 @@ private:
     RecvFile *        recvFlow;
     SendFile *        sendFlow;
     quint32           heartBeatCnt{0};
-    quint32           recvByteCnt{0};
+    quint32           recvRightCnt{0};
+    quint32           recvWrongCnt{0};
+    quint32           recvWrongFrame{0};
     QVector<bool>     sendFileBlockStatus{false};
     int               blockSuccessCnt{0};
 

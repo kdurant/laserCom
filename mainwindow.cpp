@@ -117,6 +117,10 @@ void MainWindow::initUI()
     setWindowTitle("激光通信测试软件");
     ui->textEdit_recv->moveCursor(QTextCursor::End);
     ui->textEdit_send->moveCursor(QTextCursor::End);
+
+    ui->groupBox_AtCommand->setVisible(false);
+    ui->groupBox_Debug->setVisible(false);
+
     for(auto i : at.queryCommond)
     {
         ui->comboBox_query->addItem(i.context);
@@ -337,7 +341,8 @@ void MainWindow::initSignalSlot()
             {
                 QElapsedTimer timer;
                 timer.start();
-                ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
+                if(ui->checkBox_recvVerbose->isChecked())
+                    ui->textEdit_recv->append("received file: " + recvFlow->getFileName() + ".");
                 ui->label_vedioShow->setPixmap(QPixmap(path));
                 qInfo() << "Display picture elapsed(ms) : " << timer.elapsed();
             }

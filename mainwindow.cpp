@@ -458,7 +458,8 @@ void MainWindow::initSignalSlot()
     });
 
     connect(sendFlow, &SendFile::successBlockNumber, this, [this](int num) {
-        ui->progressBar_sendFile->setValue(num);
+        if(opStatus == SEND_FILE)
+            ui->progressBar_sendFile->setValue(num);
     });
 
     connect(ui->btn_sendText, &QPushButton::pressed, this, [this]() {
@@ -476,11 +477,15 @@ void MainWindow::initSignalSlot()
         ui->textEdit_recv->append("<font color=red>[Sender] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
         ui->textEdit_recv->append(ui->textEdit_send->toPlainText());
 
-        opStatus = SEND_FILE;
+        char mode = isSendVideo ? 'n' : 'y';
+        if(mode == 'y')
+            opStatus = SEND_FILE;
+        else
+            opStatus = IDLE;
+
         sendFlow->setFileName(path + name + ".chat");
         sendFlow->setFileBlockSize(name + ".chat", sysPara.blockSize);
 
-        char mode = isSendVideo ? 'n' : 'y';
         if(sendFlow->send(name + ".chat", sysPara.blockIntervalTime, sysPara.repeatNum, mode) == false)
             QMessageBox::warning(this, "warning", "信息发送失败");
         else
@@ -572,8 +577,14 @@ void MainWindow::initSignalSlot()
     });
 
     connect(ui->btn_audioSend, &QPushButton::pressed, this, [this]() {
+        if(currentAudioFile.isEmpty())
+            return;
+
         int     index    = currentAudioFile.lastIndexOf('/');
         QString fileName = currentAudioFile.mid(index + 1);
+
+        ui->progressBar_sendFile->setValue(0);
+        ui->progressBar_sendFile->setMaximum(qCeil(QFileInfo(currentAudioFile).size() / (qreal)sysPara.blockSize) - 1);
 
         opStatus = SEND_FILE;
         sendFlow->setFileName(fileName);
@@ -581,6 +592,9 @@ void MainWindow::initSignalSlot()
 
         char mode = isSendVideo ? 'n' : 'y';
         sendFlow->send(fileName, sysPara.blockIntervalTime, sysPara.repeatNum, mode);
+
+        ui->textEdit_recv->append("<font color=red>[Sender] " + QDateTime::currentDateTime().toString("yyyy/MM/dd hh:mm:ss") + "</font>");
+        ui->textEdit_recv->append(currentAudioFile);
         opStatus = IDLE;
     });
 

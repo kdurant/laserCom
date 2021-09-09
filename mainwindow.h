@@ -56,6 +56,7 @@ public:
     void userStatusBar();
 
     QString read_ip_address();
+    void    searchCamera(void);
 signals:
     void receivedNewBlock();
 

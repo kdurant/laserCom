@@ -610,37 +610,10 @@ void MainWindow::initSignalSlot()
     //********************视频相关操作*************************************
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index) {
         if(index == 2)
-        {
-            if(camera->state() != QCamera::ActiveState)
-            {
-                camera->start();
-
-                QList<QCameraViewfinderSettings> ViewSets = camera->supportedViewfinderSettings();
-                int                              i        = 0;
-                qDebug() << "viewfinderResolutions sizes.len = " << ViewSets.length();
-
-                for(i = 0; i < ViewSets.length(); i++)
-                {
-                    if(ViewSets[i].resolution() == QSize(640, 480))
-                        break;
-                }
-                camera->setViewfinderSettings(ViewSets[i--]);
-            }
-        }
+            searchCamera();
     });
     connect(ui->btn_cameraOpen, &QPushButton::pressed, this, [this]() {
-        camera->start();
-
-        QList<QCameraViewfinderSettings> ViewSets = camera->supportedViewfinderSettings();
-        int                              i        = 0;
-        qDebug() << "viewfinderResolutions sizes.len = " << ViewSets.length();
-
-        for(i = 0; i < ViewSets.length(); i++)
-        {
-            if(ViewSets[i].resolution() == QSize(640, 480))
-                break;
-        }
-        camera->setViewfinderSettings(ViewSets[i--]);
+        searchCamera();
     });
 
     connect(ui->btn_cameraClose, &QPushButton::pressed, this, [this]() {
@@ -749,6 +722,30 @@ QString MainWindow::read_ip_address()
         }
     }
     return 0;
+}
+
+void MainWindow::searchCamera()
+{
+    if(camera->state() != QCamera::ActiveState)
+    {
+        camera->start();
+        if(camera->state() == QCamera::UnloadedState)
+        {
+            QMessageBox::warning(this, "warning", "没有找到摄像头");
+            return;
+        }
+
+        QList<QCameraViewfinderSettings> ViewSets = camera->supportedViewfinderSettings();
+        int                              i        = 0;
+        qDebug() << "viewfinderResolutions sizes.len = " << ViewSets.length();
+
+        for(i = 0; i < ViewSets.length(); i++)
+        {
+            if(ViewSets[i].resolution() == QSize(640, 480))
+                break;
+        }
+        camera->setViewfinderSettings(ViewSets[i--]);
+    }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)

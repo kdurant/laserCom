@@ -507,18 +507,15 @@ void MainWindow::initSignalSlot()
 
         int interval = ui->lineEdit_testFrameInterval->text().toInt();
 
-        QByteArray data    = QByteArray(1411, 0x11);
-        int        number  = ui->lineEdit_testFrameNumber->text().toInt();
-        int        sendCnt = 0;
+        QByteArray data   = QByteArray(1411, 0x11);
+        int        number = ui->lineEdit_testFrameNumber->text().toInt();
+        sendCnt           = 0;
         if(number != 0)
         {
             for(int i = 0; i < number; i++)
             {
                 dispatch->encode(UserProtocol::SET_TEST_PATTERN, data);
                 sendCnt += 1446;
-                ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
-                                           QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
-                                           QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
                 Common::sleepWithoutBlock(interval);
                 QCoreApplication::processEvents();
             }
@@ -531,9 +528,6 @@ void MainWindow::initSignalSlot()
                 break;
             dispatch->encode(UserProtocol::SET_TEST_PATTERN, data);
             sendCnt += 1446;
-            ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
-                                       QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
-                                       QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
             Common::sleepWithoutBlock(interval);
             QCoreApplication::processEvents();
         }
@@ -758,6 +752,10 @@ void MainWindow::timerEvent(QTimerEvent *event)
     QByteArray data;
     if(timer1s == event->timerId())
     {
+        ui->label_sendCnt->setText("发送数据：" + QString::number(sendCnt) + "Bytes/" +
+                                   QString::number(sendCnt / 1024.0 / 1024, 10, 3) + "Mb/" +
+                                   QString::number(sendCnt / 1024.0 / 1024 / 1024, 10, 3) + "Gb");
+
         heartBeatCnt++;
         if(tcpStatus == 0x01)
         {

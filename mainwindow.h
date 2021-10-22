@@ -121,5 +121,7 @@ private:
 
     QTimer *testPatternTimer;
     bool    testPatternTimeout{true};
+
+    int sendCnt{0};
 };
 #endif  // MAINWINDOW_H
